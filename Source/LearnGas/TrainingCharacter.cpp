@@ -135,6 +135,12 @@ void ATrainingCharacter::Look(const FInputActionValue& Value)
 
 void ATrainingCharacter::Strike()
 {
+	if (ULightStrikeAbility* Active = ActiveStrike.Get())
+	{
+		Active->BufferNextStrike();
+		return;
+	}
+
 	if (auto* ASC = GetAbilitySystemComponent())
 	{
 		ASC->TryActivateAbilityByClass(ULightStrikeAbility::StaticClass());

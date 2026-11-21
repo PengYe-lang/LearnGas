@@ -1,6 +1,6 @@
 # LearnGas
 
-用 Unreal Engine 5.8.4 和 C++ 学习 Gameplay Ability System（GAS），实践方向是第三人称连招 RPG。当前可玩里程碑是一段轻击：第三人称角色出拳命中训练靶，通过 GAS 扣血。
+用 Unreal Engine 5.8.4 和 C++ 学习 Gameplay Ability System（GAS），实践方向是第三人称连招 RPG。当前可在训练关卡打出三段轻击，每段命中通过 GAS 结算。
 
 ## 在 Windows 上打开
 
@@ -15,13 +15,14 @@
    ```
 
 3. 若系统提示找不到关联引擎，右键 `LearnGas.uproject`，使用 **Switch Unreal Engine version** 选择本机的 UE 5.8.4。生成 Visual Studio 工程文件并以 **Development Editor / Win64** 编译 `LearnGasEditor`。
-4. 打开默认关卡 `Content/Maps/MeleeTraining` 并点击播放。WASD 按镜头方向移动，鼠标转动镜头，左键出一拳。角色初始朝向训练靶，移动可以改变角色朝向。命中扣 20 点生命，长按只起手一次；训练靶生命归零后约两秒恢复。最初的连接测试在 `Content/Maps/MCPConnectionTest`。
+4. 打开默认关卡 `Content/Maps/MeleeTraining` 并点击播放。WASD 按镜头方向移动，鼠标转动镜头，点击左键起手。前两段各自在动作开始约半秒后再点一次，即可接到下一段。长按只起手一次。每段命中扣 20 点生命，训练靶生命归零后约两秒恢复。最初的连接测试在 `Content/Maps/MCPConnectionTest`。
 
-## 一段轻击的代码入口
+## 三段轻击的代码入口
 
 1. `ATrainingPlayerState` 持有 ASC 和属性集。`ATrainingCharacter` 绑定 Avatar，由服务端授予 `ULightStrikeAbility`。Enhanced Input 的 Started 事件发起这次激活。
-2. 能力播放 `AM_LightStrike`。其 Strike 通知轨道在动作第 0.10 至 0.46 秒开放命中采样，权威端沿右手轨迹检测。每次能力激活独立记录已命中的目标。
-3. `ULightStrikeDamage` 是即时 Gameplay Effect，写入 `IncomingDamage`。`UCombatAttributes` 消费并清零中间值，将结果扣到 Health；靶上方的血条读取同一属性。角色、基础移动和第一段攻击动画来自本机 UE 5.8 第三人称模板。
+2. 一次能力激活从 `AM_LightStrike` 的 `Light1` 开始。`Light1` 和 `Light2` 的 Combo 轨道各在段内 0.34 至 0.72 秒开放一格输入缓冲，在 0.74 秒决定是否衔接。只有当前段缓存的按下事件才能设置下一段。`Light3` 收招后结束激活。
+3. Strike 轨道为每段指定命中窗口和采样的骨骼。权威端沿骨骼轨迹扫掠，进入新段时重置已命中集合，同一目标每段最多结算一次。攻击挥空时也可以接下一段。
+4. `ULightStrikeDamage` 是即时 Gameplay Effect，写入 `IncomingDamage`。`UCombatAttributes` 消费并清零中间值，将结果扣到 Health。靶上方的血条读取同一属性。角色、基础移动和攻击动画来自本机 UE 5.8 第三人称模板。
 
 ## 学习记录
 
