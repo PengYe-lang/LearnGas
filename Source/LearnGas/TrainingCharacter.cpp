@@ -32,10 +32,10 @@ ATrainingCharacter::ATrainingCharacter()
 	Camera->SetupAttachment(Arm, USpringArmComponent::SocketName);
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> Body(TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple"));
-	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimBP(TEXT("/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance> Animation(TEXT("/Game/Combat/ABP_TrainingCombat"));
 	GetMesh()->SetSkeletalMesh(Body.Object);
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, -90), FRotator(0, -90, 0));
-	GetMesh()->SetAnimInstanceClass(AnimBP.Class);
+	GetMesh()->SetAnimInstanceClass(Animation.Class);
 	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> Movement(TEXT("/Game/Input/IMC_Default"));
