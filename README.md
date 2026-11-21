@@ -24,7 +24,7 @@
 3. Strike 轨道为每段指定命中窗口和采样的骨骼。权威端沿骨骼轨迹扫掠，进入新段时重置已命中集合，同一目标每段最多结算一次。攻击挥空时也可以接下一段。
 4. `ULightStrikeDamage` 是即时 Gameplay Effect，写入 `IncomingDamage`。`UCombatAttributes` 消费并清零中间值，将结果扣到 Health。靶上方的血条读取同一属性。角色、基础移动和前两段出拳动画来自 UE 5.8 第三人称模板。
 
-按住 WASD 也可以接招。`ABP_TrainingCombat` 的前两段只在脊柱以上混入攻击姿势，腰腿继续走跑。第三段使用专为 Manny 调整的 `A_MannyFrontKick`，踢击期间短暂混入腿部动作，并沿右脚 `foot_r` 检测命中。动作期间角色的位移由移动输入控制。
+按住 WASD 也可以接招。`ABP_TrainingCombat` 的前两段只在脊柱以上混入攻击姿势，腰腿继续走跑。第三段播放 `MM_Attack_03`，在原动作的命中帧保留全身姿势，随后淡回走跑。第三段沿 `hand_l` 采样命中，角色位移仍由移动输入控制。
 
 ## 学习记录
 

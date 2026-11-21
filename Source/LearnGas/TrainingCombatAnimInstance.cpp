@@ -17,8 +17,8 @@ void UTrainingCombatAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	float EndTime;
 	Montage->GetSectionStartAndEndTime(Montage->GetSectionIndex(KickSection), StartTime, EndTime);
 	const float Time = Montage_GetPosition(Montage) - StartTime;
-	// Give the kick control of the legs during the chamber, strike, and retraction.
+	// Keep the original finisher pose through its contact frames before blending back to locomotion.
 	const float Enter = FMath::SmoothStep(0.10f, 0.25f, Time);
-	const float Leave = 1.f - FMath::SmoothStep(0.63f, 0.86f, Time);
+	const float Leave = 1.f - FMath::SmoothStep(0.95f, 1.20f, Time);
 	KickLowerBodyWeight = Enter * Leave;
 }
