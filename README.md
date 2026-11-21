@@ -1,6 +1,6 @@
 # LearnGas
 
-用 Unreal Engine 5.8.4 和 C++ 逐步学习 Gameplay Ability System（GAS）。首个版本是可运行的工程基线，包含通过 Epic 官方 MCP 创建的测试关卡。后续技能练习按迭代保存在 Git 历史中。
+用 Unreal Engine 5.8.4 和 C++ 学习 Gameplay Ability System（GAS），实践方向是第三人称连招 RPG。当前可运行基线包含通过 Epic 官方 MCP 创建的测试关卡；下一项玩法练习是第三人称角色对训练目标的一段轻击。
 
 ## 在 Windows 上打开
 
@@ -19,7 +19,7 @@
 
 ## 学习记录
 
-[Aura 的 GAS 架构与 LearnGas 学习路线](Aura-GAS-Architecture.md) 从一发火球讲解技能激活、伤害结算和属性反馈，并列出迁移到本工程时应验证的问题。
+[Aura 的 GAS 架构与 LearnGas 学习路线](Aura-GAS-Architecture.md) 前五节用火球分析技能激活、伤害和属性反馈。第六节将这些职责映射到第三人称近战，并给出三段轻击的输入、衔接、打断和验收规则。
 
 [从 Aura 原项目的提交学习 GAS 架构](Aura-Upstream-Reading.md) 按六个设计阶段链接 DruidMech 的课程提交与最终 C++ 实现，并对照火球与雷电光束的职责边界。
 

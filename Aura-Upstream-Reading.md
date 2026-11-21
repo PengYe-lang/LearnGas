@@ -40,7 +40,7 @@
 
 火球在服务端从战斗接口取得施法插槽，按技能等级与投射物上限决定发射数量，为每个投射物准备伤害参数。之后的目标由飞行碰撞确定。雷电光束则先追踪主目标，再以它为中心，在 850 个世界单位内搜寻候选目标；额外目标数取“技能等级减一”与配置上限的较小值，并对选中的目标订阅死亡事件。因此，两者真正不同的是目标如何产生、目标能保持多久，以及何时触发效果。[火球的发射策略](https://github.com/DruidMech/GameplayAbilitySystem_Aura/blob/cd631e409fcb7f78f3a6d8bc3a58496a93c8d52b/Source/Aura/Private/AbilitySystem/Abilities/AuraFireBolt.cpp#L103) · [光束的目标选择与死亡订阅](https://github.com/DruidMech/GameplayAbilitySystem_Aura/blob/cd631e409fcb7f78f3a6d8bc3a58496a93c8d52b/Source/Aura/Private/AbilitySystem/Abilities/AuraBeamSpell.cpp#L32)
 
-给 LearnGas 的练习是先写单发火球，再写单目标光束。让两者各自决定命中时机，复用“由源 ASC 建立 Spec → 目标 ASC 应用 → 属性集消费”的部分。调整敌人抗性时应只动数值或结算；增加光束跳转目标时应只动光束逻辑。第二个技能能否按这个边界加进来，是判断第一个技能的抽象是否合理的一次低成本检验。[效果构建](https://github.com/DruidMech/GameplayAbilitySystem_Aura/blob/cd631e409fcb7f78f3a6d8bc3a58496a93c8d52b/Source/Aura/Private/AbilitySystem/AuraAbilitySystemLibrary.cpp#L512) · [伤害计算](https://github.com/DruidMech/GameplayAbilitySystem_Aura/blob/cd631e409fcb7f78f3a6d8bc3a58496a93c8d52b/Source/Aura/Private/AbilitySystem/ExecCalc/ExecCalc_Damage.cpp#L107)
+把这个边界带到 LearnGas 的近战练习中：普通轻击由角色动作的有效窗口判定命中，未来的飞行技能可由投射物碰撞判定；两者分别产生目标，再复用同一个伤害 Spec 与属性结算入口。可以用一项改动检查拆分是否有效：调整敌人的物理抗性时，三段轻击应一起受影响；调整第二段的接招窗口时，只改变操作手感。[效果构建](https://github.com/DruidMech/GameplayAbilitySystem_Aura/blob/cd631e409fcb7f78f3a6d8bc3a58496a93c8d52b/Source/Aura/Private/AbilitySystem/AuraAbilitySystemLibrary.cpp#L512) · [伤害计算](https://github.com/DruidMech/GameplayAbilitySystem_Aura/blob/cd631e409fcb7f78f3a6d8bc3a58496a93c8d52b/Source/Aura/Private/AbilitySystem/ExecCalc/ExecCalc_Damage.cpp#L107)
 
 ## 带着三个问题复核原版
 
