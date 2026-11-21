@@ -19,4 +19,6 @@
 
 ## 学习记录
 
+[Aura 的 GAS 架构与 LearnGas 学习路线](Aura-GAS-Architecture.md) 从一发火球讲解技能激活、伤害结算和属性反馈，并列出迁移到本工程时应验证的问题。
+
 [迭代记录](CHANGELOG.md) 按时间列出改动和验证结果。[协作约定](AGENTS.md) 说明每次迭代如何提交、推送和回退。
