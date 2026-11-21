@@ -21,4 +21,6 @@
 
 [Aura 的 GAS 架构与 LearnGas 学习路线](Aura-GAS-Architecture.md) 从一发火球讲解技能激活、伤害结算和属性反馈，并列出迁移到本工程时应验证的问题。
 
+[从 Aura 原项目的提交学习 GAS 架构](Aura-Upstream-Reading.md) 按六个设计阶段链接 DruidMech 的课程提交与最终 C++ 实现，并对照火球与雷电光束的职责边界。
+
 [迭代记录](CHANGELOG.md) 按时间列出改动和验证结果。[协作约定](AGENTS.md) 说明每次迭代如何提交、推送和回退。

@@ -1,5 +1,10 @@
 # LearnGas 迭代记录
 
+## 2026-11-21 · 将 Aura 原版源码接入学习路线
+
+- 对照 DruidMech 原仓库 UE 5.3 提交 `cd631e4` 与本地副本，核实核心 GAS 源码一致，并记录读档 MVVM 相关差异。
+- 在[主路线](Aura-GAS-Architecture.md)接入[上游源码导读](Aura-Upstream-Reading.md)，用课程提交、最终实现与练习串起六个阶段，增加火球与光束的设计对照。验证范围为源码与 Git 历史。
+
 ## 2026-11-21 · 分析 Aura 的 GAS 架构
 
 - 新增 [Aura 的 GAS 架构与 LearnGas 学习路线](Aura-GAS-Architecture.md)，从本地 UE 5.3 工程追踪玩家与敌人的 ASC 初始化、火球结算、技能树、UI 和存档。
