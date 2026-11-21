@@ -137,7 +137,7 @@ void ATrainingCharacter::Strike()
 {
 	if (ULightStrikeAbility* Active = ActiveStrike.Get())
 	{
-		Active->BufferNextStrike();
+		Active->ReceiveStrikeInput();
 		return;
 	}
 

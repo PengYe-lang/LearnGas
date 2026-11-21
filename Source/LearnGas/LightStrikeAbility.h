@@ -11,8 +11,8 @@ class LEARNGAS_API ULightStrikeAbility : public UGameplayAbility
 	GENERATED_BODY()
 public:
 	ULightStrikeAbility();
-	void BufferNextStrike();
-	void SetBufferWindow(const UAnimSequenceBase* Animation, bool bOpen);
+	void ReceiveStrikeInput();
+	void OpenBufferWindow(const UAnimSequenceBase* Animation);
 	void ConsumeBufferedStrike(const UAnimSequenceBase* Animation);
 	void SampleStrike(const UAnimSequenceBase* Animation, FName HitSocket, bool bFirstSample);
 	virtual void ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* Info,
@@ -22,14 +22,26 @@ public:
 
 private:
 	UPROPERTY() TSoftObjectPtr<UAnimMontage> AttackMontage;
+	UPROPERTY(EditDefaultsOnly, Category="Combo", meta=(ClampMin="0.0", Units="s"))
+	float ContinuationGracePeriod = 0.30f;
+
 	TSet<TWeakObjectPtr<AActor>> HitActors;
 	FVector PreviousStrikePosition = FVector::ZeroVector;
 	FName HitSection;
+	FName LastPlayedSection;
 	FName OpenBufferSection;
 	FName BufferedSection;
+	FName DecisionSection;
+	FName GraceNextSection;
+	FTimerHandle GraceTimer;
 
 	FName GetPlayingSection(const UAnimSequenceBase* Animation) const;
+	void PlayStrikeSection(UAnimMontage* Montage, FName Section);
+	void OnStrikeSectionChanged(UAnimMontage* Montage, FName Section, bool bLooped);
+	void ListenForStrikeInput();
+	void EndStrike();
 	void ResetCombo();
+	UFUNCTION() void OnStrikePressed(float TimeWaited);
 	UFUNCTION() void FinishStrike();
 	UFUNCTION() void InterruptStrike();
 };
@@ -55,8 +67,6 @@ class LEARNGAS_API ULightStrikeBufferWindow : public UAnimNotifyState
 public:
 	ULightStrikeBufferWindow();
 	virtual void NotifyBegin(USkeletalMeshComponent* Mesh, UAnimSequenceBase* Animation, float Duration,
-		const FAnimNotifyEventReference& EventReference) override;
-	virtual void NotifyEnd(USkeletalMeshComponent* Mesh, UAnimSequenceBase* Animation,
 		const FAnimNotifyEventReference& EventReference) override;
 };
 

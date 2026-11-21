@@ -15,12 +15,12 @@
    ```
 
 3. 若系统提示找不到关联引擎，右键 `LearnGas.uproject`，使用 **Switch Unreal Engine version** 选择本机的 UE 5.8.4。生成 Visual Studio 工程文件并以 **Development Editor / Win64** 编译 `LearnGasEditor`。
-4. 打开默认关卡 `Content/Maps/MeleeTraining` 并点击播放。WASD 按镜头方向移动，鼠标转动镜头，点击左键起手。前两段各自在动作开始约半秒后再点一次，即可接到下一段。长按只起手一次。每段命中扣 20 点生命，训练靶生命归零后约两秒恢复。最初的连接测试在 `Content/Maps/MCPConnectionTest`。
+4. 打开默认关卡 `Content/Maps/MeleeTraining` 并点击播放。WASD 按镜头方向移动，鼠标转动镜头，点击左键起手。前两段约在动作开始 0.34 秒后可再次点按，收招播完后还有 0.30 秒可以接下一段。长按只起手一次。每段命中扣 20 点生命，训练靶生命归零后约两秒恢复。最初的连接测试在 `Content/Maps/MCPConnectionTest`。
 
 ## 三段轻击的代码入口
 
 1. `ATrainingPlayerState` 持有 ASC 和属性集。`ATrainingCharacter` 绑定 Avatar，由服务端授予 `ULightStrikeAbility`。Enhanced Input 的 Started 事件发起这次激活。
-2. 一次能力激活从 `AM_LightStrike` 的 `Light1` 开始。`Light1` 和 `Light2` 的 Combo 轨道各在段内 0.34 至 0.72 秒开放一格输入缓冲，在 0.74 秒决定是否衔接。只有当前段缓存的按下事件才能设置下一段。`Light3` 收招后结束激活。
+2. 一次能力激活从 `AM_LightStrike` 的 `Light1` 开始。前两段在段内 0.34 秒开放一格输入缓冲，蒙太奇仍可设置下一段时走段间衔接。遇到收招混出则在该段播完后接续。自然收招后仍有 `ContinuationGracePeriod`（0.30 秒）可从下一段播放；超过宽限或三段打完后，下次出招从 `Light1` 重新开始。
 3. Strike 轨道为每段指定命中窗口和采样的骨骼。权威端沿骨骼轨迹扫掠，进入新段时重置已命中集合，同一目标每段最多结算一次。攻击挥空时也可以接下一段。
 4. `ULightStrikeDamage` 是即时 Gameplay Effect，写入 `IncomingDamage`。`UCombatAttributes` 消费并清零中间值，将结果扣到 Health。靶上方的血条读取同一属性。角色、基础移动和前两段出拳动画来自 UE 5.8 第三人称模板。
 
