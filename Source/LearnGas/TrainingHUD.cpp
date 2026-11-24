@@ -1,5 +1,7 @@
 #include "TrainingHUD.h"
 #include "TrainingDummy.h"
+#include "TrainingPulse.h"
+#include "TrainingCharacter.h"
 #include "CombatAttributes.h"
 #include "Engine/Canvas.h"
 #include "EngineUtils.h"
@@ -27,7 +29,32 @@ void ATrainingHUD::DrawHUD()
 		Canvas->DrawItem(Item);
 	};
 
-	Text(24 * Scale, Canvas->SizeY - 42 * Scale, TEXT("WASD 移动    鼠标 转动镜头    左键 轻击"), 15);
+	const float Margin = 24.f * Scale;
+	Text(Margin, Canvas->SizeY - 42 * Scale, TEXT("WASD 移动    左键 轻击    轻二后右键 重击    左 Shift 闪步"), 15);
+	if (const auto* Character = Cast<ATrainingCharacter>(PlayerOwner->GetPawn()))
+	{
+		if (const auto* ASC = Character->GetAbilitySystemComponent())
+		{
+			const float HP = ASC->GetNumericAttribute(UCombatAttributes::GetHealthAttribute());
+			const float Stamina = ASC->GetNumericAttribute(UCombatAttributes::GetStaminaAttribute());
+			Text(Margin, Margin, FString::Printf(TEXT("生命 %.0f    体力 %.0f / 100"), HP, Stamina), 18);
+			DrawRect(FLinearColor(.03f, .04f, .05f), Margin, Margin + 36 * Scale, 220 * Scale, 7 * Scale);
+			DrawRect(FLinearColor(.95f, .73f, .25f), Margin, Margin + 36 * Scale,
+				220 * Scale * Stamina / UCombatAttributes::StaminaCapacity, 7 * Scale);
+			if (ASC->HasMatchingGameplayTag(TrainingHitStun))
+			{
+				Text(Margin, Margin + 50 * Scale, TEXT("受击硬直"), 15);
+			}
+		}
+	}
+	for (TActorIterator<ATrainingPulse> It(GetWorld()); It; ++It)
+	{
+		FVector2D Screen;
+		if (PlayerOwner->ProjectWorldLocationToScreen(It->GetActorLocation() + FVector(0, 0, 120), Screen, true))
+		{
+			Text(Screen.X, Screen.Y, It->IsWindingUp() ? TEXT("脉冲即将释放") : TEXT("受击打断测试区"), 15, true);
+		}
+	}
 	for (TActorIterator<ATrainingDummy> It(GetWorld()); It; ++It)
 	{
 		FVector2D Screen;

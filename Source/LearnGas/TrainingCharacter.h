@@ -29,6 +29,8 @@ private:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Strike();
+	void HeavyStrike();
+	void Dodge();
 
 	UPROPERTY() TObjectPtr<UInputMappingContext> MovementContext;
 	UPROPERTY() TObjectPtr<UInputMappingContext> MouseContext;
@@ -37,4 +39,6 @@ private:
 	UPROPERTY() TObjectPtr<UInputAction> LookAction;
 	UPROPERTY() TObjectPtr<UInputAction> MouseAction;
 	UPROPERTY() TSoftObjectPtr<UInputAction> StrikeAction;
+	UPROPERTY() TSoftObjectPtr<UInputAction> HeavyStrikeAction;
+	UPROPERTY() TSoftObjectPtr<UInputAction> DodgeAction;
 };

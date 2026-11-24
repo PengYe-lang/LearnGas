@@ -1,11 +1,30 @@
 #include "CombatAttributes.h"
 #include "GameplayEffectExtension.h"
+#include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "TrainingCharacter.h"
+
+UE_DEFINE_GAMEPLAY_TAG(TrainingAttack, "Ability.Training.Attack");
+UE_DEFINE_GAMEPLAY_TAG(TrainingDodging, "State.Training.Dodging");
+UE_DEFINE_GAMEPLAY_TAG(TrainingHitStun, "State.Training.HitStun");
+
+namespace
+{
+	void ConfigureInstantModifier(UGameplayEffect& Effect, FGameplayAttribute Attribute, float Magnitude)
+	{
+		Effect.DurationPolicy = EGameplayEffectDurationType::Instant;
+		FGameplayModifierInfo& Modifier = Effect.Modifiers.AddDefaulted_GetRef();
+		Modifier.Attribute = Attribute;
+		Modifier.ModifierOp = EGameplayModOp::Additive;
+		Modifier.ModifierMagnitude = FScalableFloat(Magnitude);
+	}
+}
 
 UCombatAttributes::UCombatAttributes()
 {
 	InitMaxHealth(100.f);
 	InitHealth(GetMaxHealth());
+	InitStamina(StaminaCapacity);
 }
 
 void UCombatAttributes::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
@@ -15,7 +34,17 @@ void UCombatAttributes::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	{
 		const float Damage = FMath::Max(0.f, GetIncomingDamage());
 		SetIncomingDamage(0.f);
-		SetHealth(FMath::Clamp(GetHealth() - Damage, 0.f, GetMaxHealth()));
+		if (Damage <= 0.f || Data.Target.HasMatchingGameplayTag(TrainingDodging)) return;
+
+		const float PreviousHealth = GetHealth();
+		SetHealth(FMath::Clamp(PreviousHealth - Damage, 0.f, GetMaxHealth()));
+		if (GetHealth() < PreviousHealth && Cast<ATrainingCharacter>(Data.Target.GetAvatarActor()))
+		{
+			const auto Stun = Data.Target.MakeOutgoingSpec(UTrainingHitStunEffect::StaticClass(), 1.f, Data.EffectSpec.GetContext());
+			if (Stun.IsValid()) Data.Target.ApplyGameplayEffectSpecToSelf(*Stun.Data);
+			const FGameplayTagContainer AttackTags(TrainingAttack);
+			Data.Target.CancelAbilities(&AttackTags);
+		}
 	}
 }
 
@@ -24,6 +53,7 @@ void UCombatAttributes::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCombatAttributes, Health, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCombatAttributes, MaxHealth, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCombatAttributes, Stamina, COND_None, REPNOTIFY_Always);
 }
 
 void UCombatAttributes::OnRep_Health(const FGameplayAttributeData& Previous)
@@ -38,9 +68,46 @@ void UCombatAttributes::OnRep_MaxHealth(const FGameplayAttributeData& Previous)
 
 ULightStrikeDamage::ULightStrikeDamage()
 {
-	DurationPolicy = EGameplayEffectDurationType::Instant;
-	FGameplayModifierInfo& Damage = Modifiers.AddDefaulted_GetRef();
-	Damage.Attribute = UCombatAttributes::GetIncomingDamageAttribute();
-	Damage.ModifierOp = EGameplayModOp::Additive;
-	Damage.ModifierMagnitude = FScalableFloat(20.f);
+	ConfigureInstantModifier(*this, UCombatAttributes::GetIncomingDamageAttribute(), 20.f);
+}
+
+void UCombatAttributes::OnRep_Stamina(const FGameplayAttributeData& Previous)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCombatAttributes, Stamina, Previous);
+}
+
+UHeavyStrikeDamage::UHeavyStrikeDamage()
+{
+	ConfigureInstantModifier(*this, UCombatAttributes::GetIncomingDamageAttribute(), 45.f);
+}
+
+UTrainingPulseDamage::UTrainingPulseDamage()
+{
+	ConfigureInstantModifier(*this, UCombatAttributes::GetIncomingDamageAttribute(), 10.f);
+}
+
+UTrainingHitStunEffect::UTrainingHitStunEffect()
+{
+	DurationPolicy = EGameplayEffectDurationType::HasDuration;
+	DurationMagnitude = FScalableFloat(0.40f);
+	auto* Tags = CreateDefaultSubobject<UTargetTagsGameplayEffectComponent>(TEXT("HitStun"));
+	FInheritedTagContainer Changes;
+	Changes.AddTag(TrainingHitStun);
+	Tags->SetAndApplyTargetTagChanges(Changes);
+	GEComponents.Add(Tags);
+}
+
+ULightStrikeCost::ULightStrikeCost()
+{
+	ConfigureInstantModifier(*this, UCombatAttributes::GetStaminaAttribute(), -12.f);
+}
+
+UHeavyStrikeCost::UHeavyStrikeCost()
+{
+	ConfigureInstantModifier(*this, UCombatAttributes::GetStaminaAttribute(), -30.f);
+}
+
+UTrainingDodgeCost::UTrainingDodgeCost()
+{
+	ConfigureInstantModifier(*this, UCombatAttributes::GetStaminaAttribute(), -24.f);
 }

@@ -1,5 +1,6 @@
 #include "TrainingCharacter.h"
 #include "TrainingMode.h"
+#include "TrainingDodgeAbility.h"
 #include "LightStrikeAbility.h"
 #include "AbilitySystemComponent.h"
 #include "Camera/CameraComponent.h"
@@ -50,6 +51,8 @@ ATrainingCharacter::ATrainingCharacter()
 	MouseAction = MouseInput.Object;
 	CombatContext = FSoftObjectPath(TEXT("/Game/Combat/IMC_Combat.IMC_Combat"));
 	StrikeAction = FSoftObjectPath(TEXT("/Game/Combat/IA_LightStrike.IA_LightStrike"));
+	HeavyStrikeAction = FSoftObjectPath(TEXT("/Game/Combat/IA_HeavyStrike.IA_HeavyStrike"));
+	DodgeAction = FSoftObjectPath(TEXT("/Game/Combat/IA_Dodge.IA_Dodge"));
 }
 
 UAbilitySystemComponent* ATrainingCharacter::GetAbilitySystemComponent() const
@@ -63,9 +66,15 @@ void ATrainingCharacter::InitializeAbilitySystem()
 	if (auto* ASC = GetAbilitySystemComponent())
 	{
 		ASC->InitAbilityActorInfo(GetPlayerState(), this);
-		if (HasAuthority() && !ASC->FindAbilitySpecFromClass(ULightStrikeAbility::StaticClass()))
+		if (HasAuthority())
 		{
-			ASC->GiveAbility(FGameplayAbilitySpec(ULightStrikeAbility::StaticClass(), 1));
+			const TSubclassOf<UGameplayAbility> Abilities[] = {
+				ULightStrikeAbility::StaticClass(), UHeavyStrikeAbility::StaticClass(), UTrainingDodgeAbility::StaticClass()
+			};
+			for (const auto Ability : Abilities)
+			{
+				if (!ASC->FindAbilitySpecFromClass(Ability)) ASC->GiveAbility(FGameplayAbilitySpec(Ability, 1));
+			}
 		}
 	}
 }
@@ -116,6 +125,14 @@ void ATrainingCharacter::SetupPlayerInputComponent(UInputComponent* Input)
 	{
 		Enhanced->BindAction(Attack, ETriggerEvent::Started, this, &ThisClass::Strike);
 	}
+	if (auto* Attack = HeavyStrikeAction.LoadSynchronous())
+	{
+		Enhanced->BindAction(Attack, ETriggerEvent::Started, this, &ThisClass::HeavyStrike);
+	}
+	if (auto* Evade = DodgeAction.LoadSynchronous())
+	{
+		Enhanced->BindAction(Evade, ETriggerEvent::Started, this, &ThisClass::Dodge);
+	}
 }
 
 void ATrainingCharacter::Move(const FInputActionValue& Value)
@@ -144,5 +161,21 @@ void ATrainingCharacter::Strike()
 	if (auto* ASC = GetAbilitySystemComponent())
 	{
 		ASC->TryActivateAbilityByClass(ULightStrikeAbility::StaticClass());
+	}
+}
+
+void ATrainingCharacter::HeavyStrike()
+{
+	if (auto* ASC = GetAbilitySystemComponent())
+	{
+		ASC->TryActivateAbilityByClass(UHeavyStrikeAbility::StaticClass());
+	}
+}
+
+void ATrainingCharacter::Dodge()
+{
+	if (auto* ASC = GetAbilitySystemComponent())
+	{
+		ASC->TryActivateAbilityByClass(UTrainingDodgeAbility::StaticClass());
 	}
 }

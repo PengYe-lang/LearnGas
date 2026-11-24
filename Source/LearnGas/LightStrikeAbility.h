@@ -11,6 +11,8 @@ class LEARNGAS_API ULightStrikeAbility : public UGameplayAbility
 	GENERATED_BODY()
 public:
 	ULightStrikeAbility();
+	bool CanHeavyFollowUp() const;
+	bool IsRecovering() const;
 	void ReceiveStrikeInput();
 	void OpenBufferWindow(const UAnimSequenceBase* Animation);
 	void ConsumeBufferedStrike(const UAnimSequenceBase* Animation);
@@ -19,6 +21,10 @@ public:
 		FGameplayAbilityActivationInfo Activation, const FGameplayEventData* Event) override;
 	virtual void EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* Info,
 		FGameplayAbilityActivationInfo Activation, bool bReplicate, bool bCancelled) override;
+
+protected:
+	FName StartSection = TEXT("Light1");
+	UPROPERTY() TSubclassOf<UGameplayEffect> DamageEffect;
 
 private:
 	UPROPERTY() TSoftObjectPtr<UAnimMontage> AttackMontage;
@@ -37,6 +43,7 @@ private:
 
 	FName GetPlayingSection(const UAnimSequenceBase* Animation) const;
 	void PlayStrikeSection(UAnimMontage* Montage, FName Section);
+	bool TryContinueStrike(FName Section);
 	void OnStrikeSectionChanged(UAnimMontage* Montage, FName Section, bool bLooped);
 	void ListenForStrikeInput();
 	void EndStrike();
@@ -44,6 +51,17 @@ private:
 	UFUNCTION() void OnStrikePressed(float TimeWaited);
 	UFUNCTION() void FinishStrike();
 	UFUNCTION() void InterruptStrike();
+};
+
+UCLASS()
+class UHeavyStrikeAbility : public ULightStrikeAbility
+{
+	GENERATED_BODY()
+public:
+	UHeavyStrikeAbility();
+	virtual bool CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* Info,
+		const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags,
+		FGameplayTagContainer* RelevantTags) const override;
 };
 
 UCLASS(DisplayName="Light Strike Hit Window")

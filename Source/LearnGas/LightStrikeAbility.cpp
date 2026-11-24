@@ -32,6 +32,11 @@ ULightStrikeAbility::ULightStrikeAbility()
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 	AttackMontage = FSoftObjectPath(TEXT("/Game/Combat/AM_LightStrike.AM_LightStrike"));
+	CostGameplayEffectClass = ULightStrikeCost::StaticClass();
+	DamageEffect = ULightStrikeDamage::StaticClass();
+	SetAssetTags(FGameplayTagContainer(TrainingAttack));
+	ActivationBlockedTags.AddTag(TrainingHitStun);
+	ActivationBlockedTags.AddTag(TrainingDodging);
 }
 
 void ULightStrikeAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* Info,
@@ -40,16 +45,46 @@ void ULightStrikeAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, con
 	Super::ActivateAbility(Handle, Info, Activation, Event);
 	auto* Character = Cast<ATrainingCharacter>(Info->AvatarActor.Get());
 	auto* Montage = AttackMontage.LoadSynchronous();
-	if (!Character || !Montage || !CommitAbility(Handle, Info, Activation))
+	if (!Character || !Montage || !Montage->IsValidSectionName(StartSection) || !CommitAbility(Handle, Info, Activation))
 	{
 		EndAbility(Handle, Info, Activation, true, true);
 		return;
 	}
 
+	if (const auto* PreviousStrike = Character->ActiveStrike.Get(); PreviousStrike && PreviousStrike != this)
+	{
+		GetAbilitySystemComponentFromActorInfo()->CancelAbilityHandle(PreviousStrike->GetCurrentAbilitySpecHandle());
+	}
 	ResetCombo();
 	Character->ActiveStrike = this;
-	PlayStrikeSection(Montage, StrikeSections[0]);
+	PlayStrikeSection(Montage, StartSection);
 	ListenForStrikeInput();
+}
+
+bool ULightStrikeAbility::CanHeavyFollowUp() const
+{
+	return LastPlayedSection == StrikeSections[1] && BufferedSection != LastPlayedSection && IsRecovering();
+}
+
+bool ULightStrikeAbility::IsRecovering() const
+{
+	if (!GraceNextSection.IsNone()) return true;
+
+	const auto* Montage = AttackMontage.Get();
+	const auto* Anim = GetActorInfo().GetAnimInstance();
+	const auto* Instance = Anim ? Anim->GetActiveInstanceForMontage(Montage) : nullptr;
+	if (!Instance) return !LastPlayedSection.IsNone();
+
+	const int32 SectionIndex = Montage->GetSectionIndex(LastPlayedSection);
+	if (SectionIndex == INDEX_NONE) return false;
+	float StartTime, EndTime;
+	Montage->GetSectionStartAndEndTime(SectionIndex, StartTime, EndTime);
+	// Both light punches allow cancels once their hit windows have closed.
+	const float RecoveryStart = LastPlayedSection == StrikeSections[0] ? .48f
+		: LastPlayedSection == StrikeSections[1] ? .58f
+		: LastPlayedSection == StrikeSections[2] ? .91f
+		: (EndTime - StartTime) * .80f;
+	return Instance->GetPosition() - StartTime >= RecoveryStart;
 }
 
 void ULightStrikeAbility::PlayStrikeSection(UAnimMontage* Montage, FName Section)
@@ -75,10 +110,21 @@ void ULightStrikeAbility::PlayStrikeSection(UAnimMontage* Montage, FName Section
 
 void ULightStrikeAbility::OnStrikeSectionChanged(UAnimMontage* Montage, FName Section, bool bLooped)
 {
-	if (IsActive() && Montage == GetCurrentMontage())
+	if (IsActive() && Montage == GetCurrentMontage() && Section != LastPlayedSection)
 	{
 		LastPlayedSection = Section;
+		if (!CommitAbilityCost(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo))
+		{
+			CancelAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true);
+		}
 	}
+}
+
+bool ULightStrikeAbility::TryContinueStrike(FName Section)
+{
+	if (!CommitAbilityCost(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo)) return false;
+	PlayStrikeSection(AttackMontage.Get(), Section);
+	return true;
 }
 
 FName ULightStrikeAbility::GetPlayingSection(const UAnimSequenceBase* Animation) const
@@ -121,12 +167,13 @@ void ULightStrikeAbility::OnStrikePressed(float TimeWaited)
 	const FName NextSection = NextStrikeSection(Section);
 	if (!GraceNextSection.IsNone())
 	{
-		PlayStrikeSection(AttackMontage.Get(), GraceNextSection);
+		TryContinueStrike(GraceNextSection);
 	}
 	else if (!NextSection.IsNone() && OpenBufferSection == Section && BufferedSection != Section)
 	{
 		BufferedSection = Section;
-		if (DecisionSection == Section && GetPlayingSection(AttackMontage.Get()) == Section)
+		if (DecisionSection == Section && GetPlayingSection(AttackMontage.Get()) == Section
+			&& CheckCost(CurrentSpecHandle, CurrentActorInfo))
 		{
 			MontageSetNextSectionName(Section, NextSection);
 		}
@@ -140,7 +187,7 @@ void ULightStrikeAbility::ConsumeBufferedStrike(const UAnimSequenceBase* Animati
 	const FName Section = GetPlayingSection(Animation);
 	const FName NextSection = NextStrikeSection(Section);
 	DecisionSection = Section;
-	if (!NextSection.IsNone() && BufferedSection == Section)
+	if (!NextSection.IsNone() && BufferedSection == Section && CheckCost(CurrentSpecHandle, CurrentActorInfo))
 	{
 		MontageSetNextSectionName(Section, NextSection);
 	}
@@ -177,7 +224,7 @@ void ULightStrikeAbility::SampleStrike(const UAnimSequenceBase* Animation, FName
 		const FVector ToTarget = Target->GetActorLocation() - Character->GetActorLocation();
 		if (FVector::DotProduct(Character->GetActorForwardVector(), ToTarget) <= 0.f) continue;
 
-		auto Damage = MakeOutgoingGameplayEffectSpec(ULightStrikeDamage::StaticClass(), GetAbilityLevel());
+		auto Damage = MakeOutgoingGameplayEffectSpec(DamageEffect, GetAbilityLevel());
 		if (Damage.IsValid())
 		{
 			HitActors.Add(Target);
@@ -194,10 +241,10 @@ void ULightStrikeAbility::FinishStrike()
 	{
 		EndStrike();
 	}
-	else if (BufferedSection == LastPlayedSection)
+	else if (BufferedSection == LastPlayedSection && TryContinueStrike(NextSection))
 	{
 		// An input during blend-out can no longer link the old montage instance.
-		PlayStrikeSection(AttackMontage.Get(), NextSection);
+		return;
 	}
 	else if (ContinuationGracePeriod > 0.f)
 	{
@@ -208,6 +255,23 @@ void ULightStrikeAbility::FinishStrike()
 	{
 		EndStrike();
 	}
+}
+
+UHeavyStrikeAbility::UHeavyStrikeAbility()
+{
+	StartSection = TEXT("Heavy");
+	DamageEffect = UHeavyStrikeDamage::StaticClass();
+	CostGameplayEffectClass = UHeavyStrikeCost::StaticClass();
+}
+
+bool UHeavyStrikeAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* Info,
+	const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags,
+	FGameplayTagContainer* RelevantTags) const
+{
+	const auto* Character = Info ? Cast<ATrainingCharacter>(Info->AvatarActor.Get()) : nullptr;
+	const auto* Strike = Character ? Character->ActiveStrike.Get() : nullptr;
+	return Strike && Strike->CanHeavyFollowUp()
+		&& Super::CanActivateAbility(Handle, Info, SourceTags, TargetTags, RelevantTags);
 }
 
 void ULightStrikeAbility::EndStrike()
