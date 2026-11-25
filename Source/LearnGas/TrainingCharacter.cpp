@@ -69,7 +69,7 @@ void ATrainingCharacter::InitializeAbilitySystem()
 		if (HasAuthority())
 		{
 			const TSubclassOf<UGameplayAbility> Abilities[] = {
-				ULightStrikeAbility::StaticClass(), UHeavyStrikeAbility::StaticClass(), UTrainingDodgeAbility::StaticClass()
+				ULightStrikeAbility::StaticClass(), UTrainingDodgeAbility::StaticClass()
 			};
 			for (const auto Ability : Abilities)
 			{
@@ -121,6 +121,7 @@ void ATrainingCharacter::SetupPlayerInputComponent(UInputComponent* Input)
 	Enhanced->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
 	Enhanced->BindAction(MouseAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 	Enhanced->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
+	Input->BindKey(EKeys::K, IE_Pressed, this, &ThisClass::LearnHeavyStrike);
 	if (auto* Attack = StrikeAction.LoadSynchronous())
 	{
 		Enhanced->BindAction(Attack, ETriggerEvent::Started, this, &ThisClass::Strike);
@@ -169,6 +170,14 @@ void ATrainingCharacter::HeavyStrike()
 	if (auto* ASC = GetAbilitySystemComponent())
 	{
 		ASC->TryActivateAbilityByClass(UHeavyStrikeAbility::StaticClass());
+	}
+}
+
+void ATrainingCharacter::LearnHeavyStrike()
+{
+	if (auto* PS = GetPlayerState<ATrainingPlayerState>(); PS && PS->CanLearnHeavyStrike())
+	{
+		PS->ServerLearnHeavyStrike();
 	}
 }
 

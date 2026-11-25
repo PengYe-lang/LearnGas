@@ -5,6 +5,7 @@
 #include "TrainingDummy.generated.h"
 
 class UCombatAttributes;
+struct FGameplayEffectContextHandle;
 struct FOnAttributeChangeData;
 
 UCLASS()
@@ -17,6 +18,7 @@ public:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem; }
 	const UCombatAttributes* GetAttributes() const { return Attributes; }
+	void AwardDefeatExperience(const FGameplayEffectContextHandle& DamageContext);
 
 private:
 	UPROPERTY(VisibleAnywhere) TObjectPtr<UAbilitySystemComponent> AbilitySystem;

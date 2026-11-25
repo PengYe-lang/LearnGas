@@ -30,6 +30,7 @@ private:
 	void Look(const FInputActionValue& Value);
 	void Strike();
 	void HeavyStrike();
+	void LearnHeavyStrike();
 	void Dodge();
 
 	UPROPERTY() TObjectPtr<UInputMappingContext> MovementContext;

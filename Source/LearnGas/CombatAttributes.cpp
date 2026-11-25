@@ -3,6 +3,7 @@
 #include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "TrainingCharacter.h"
+#include "TrainingDummy.h"
 
 UE_DEFINE_GAMEPLAY_TAG(TrainingAttack, "Ability.Training.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TrainingDodge, "Ability.Training.Dodge");
@@ -40,6 +41,13 @@ void UCombatAttributes::PostGameplayEffectExecute(const FGameplayEffectModCallba
 
 		const float PreviousHealth = GetHealth();
 		SetHealth(FMath::Clamp(PreviousHealth - Damage, 0.f, GetMaxHealth()));
+		if (PreviousHealth > 0.f && GetHealth() <= 0.f)
+		{
+			if (auto* Dummy = Cast<ATrainingDummy>(Data.Target.GetAvatarActor()))
+			{
+				Dummy->AwardDefeatExperience(Data.EffectSpec.GetContext());
+			}
+		}
 		if (GetHealth() < PreviousHealth && Cast<ATrainingCharacter>(Data.Target.GetAvatarActor()))
 		{
 			const auto Stun = Data.Target.MakeOutgoingSpec(UTrainingHitStunEffect::StaticClass(), 1.f, Data.EffectSpec.GetContext());

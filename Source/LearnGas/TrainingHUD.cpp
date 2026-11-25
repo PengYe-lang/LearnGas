@@ -2,6 +2,8 @@
 #include "TrainingDummy.h"
 #include "TrainingPulse.h"
 #include "TrainingCharacter.h"
+#include "TrainingMode.h"
+#include "TrainingProgressionAttributes.h"
 #include "CombatAttributes.h"
 #include "Engine/Canvas.h"
 #include "EngineUtils.h"
@@ -30,7 +32,7 @@ void ATrainingHUD::DrawHUD()
 	};
 
 	const float Margin = 24.f * Scale;
-	Text(Margin, Canvas->SizeY - 42 * Scale, TEXT("WASD 移动    左键 轻击    轻二后右键 重击    左 Shift 闪步"), 15);
+	Text(Margin, Canvas->SizeY - 42 * Scale, TEXT("WASD 移动    左键 轻击    左 Shift 闪步"), 15);
 	if (const auto* Character = Cast<ATrainingCharacter>(PlayerOwner->GetPawn()))
 	{
 		if (const auto* ASC = Character->GetAbilitySystemComponent())
@@ -41,9 +43,34 @@ void ATrainingHUD::DrawHUD()
 			DrawRect(FLinearColor(.03f, .04f, .05f), Margin, Margin + 36 * Scale, 220 * Scale, 7 * Scale);
 			DrawRect(FLinearColor(.95f, .73f, .25f), Margin, Margin + 36 * Scale,
 				220 * Scale * Stamina / UCombatAttributes::StaminaCapacity, 7 * Scale);
+			if (const auto* State = Character->GetPlayerState<ATrainingPlayerState>())
+			{
+				const int32 Level = FMath::RoundToInt(ASC->GetNumericAttribute(UTrainingProgressionAttributes::GetLevelAttribute()));
+				const int32 Experience = FMath::RoundToInt(ASC->GetNumericAttribute(UTrainingProgressionAttributes::GetExperienceAttribute()));
+				const int32 Points = FMath::RoundToInt(ASC->GetNumericAttribute(UTrainingProgressionAttributes::GetSkillPointsAttribute()));
+				const int32 Goal = UTrainingProgressionAttributes::ExperiencePerLevel;
+				const int32 CurrentExperience = FMath::Clamp(Experience - (Level - 1) * Goal, 0, Goal);
+				Text(Margin, Margin + 55 * Scale, FString::Printf(TEXT("等级 %d    经验 %d / %d    技能点 %d"),
+					Level, CurrentExperience, Goal, Points), 15);
+				FString HeavyStrikeStatus;
+				if (State->HasLearnedHeavyStrike())
+				{
+					HeavyStrikeStatus = TEXT("重击已学会    轻二收招时按右键");
+				}
+				else if (State->CanLearnHeavyStrike())
+				{
+					HeavyStrikeStatus = FString::Printf(TEXT("按 K 学习重击    消耗 %d 技能点"), State->HeavyStrikeSkillPointCost);
+				}
+				else
+				{
+					HeavyStrikeStatus = FString::Printf(TEXT("重击需要等级 %d 和 %d 技能点    击倒训练靶 +%d 经验"),
+						State->HeavyStrikeRequiredLevel, State->HeavyStrikeSkillPointCost, UTrainingDummyExperience::ExperiencePerDefeat);
+				}
+				Text(Margin, Margin + 82 * Scale, HeavyStrikeStatus, 15);
+			}
 			if (ASC->HasMatchingGameplayTag(TrainingHitStun))
 			{
-				Text(Margin, Margin + 50 * Scale, TEXT("受击硬直"), 15);
+				Text(Margin, Margin + 108 * Scale, TEXT("受击硬直"), 15);
 			}
 		}
 	}

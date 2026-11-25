@@ -6,6 +6,7 @@
 #include "TrainingMode.generated.h"
 
 class UCombatAttributes;
+class UTrainingProgressionAttributes;
 struct FOnAttributeChangeData;
 
 UCLASS()
@@ -13,13 +14,22 @@ class LEARNGAS_API ATrainingPlayerState : public APlayerState, public IAbilitySy
 {
 	GENERATED_BODY()
 public:
+	static constexpr int32 HeavyStrikeRequiredLevel = 2;
+	static constexpr int32 HeavyStrikeSkillPointCost = 1;
+
 	ATrainingPlayerState();
 	virtual void BeginPlay() override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem; }
+	bool HasLearnedHeavyStrike() const;
+	bool CanLearnHeavyStrike() const;
+
+	UFUNCTION(Server, Reliable)
+	void ServerLearnHeavyStrike();
 
 private:
 	UPROPERTY(VisibleAnywhere) TObjectPtr<UAbilitySystemComponent> AbilitySystem;
 	UPROPERTY() TObjectPtr<UCombatAttributes> Attributes;
+	UPROPERTY() TObjectPtr<UTrainingProgressionAttributes> Progression;
 	FTimerHandle StaminaRegen;
 
 	void OnStaminaChanged(const FOnAttributeChangeData& Change);
