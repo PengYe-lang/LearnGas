@@ -7,7 +7,9 @@
 #include "CombatAttributes.generated.h"
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingAttack);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingDodge);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingDodging);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingDodgeInvulnerable);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingHitStun);
 
 UCLASS()
@@ -98,6 +100,14 @@ class UTrainingDodgeCost : public UGameplayEffect
 	GENERATED_BODY()
 public:
 	UTrainingDodgeCost();
+};
+
+UCLASS()
+class UTrainingDodgeInvulnerabilityEffect : public UGameplayEffect
+{
+	GENERATED_BODY()
+public:
+	UTrainingDodgeInvulnerabilityEffect();
 };
 
 UCLASS()

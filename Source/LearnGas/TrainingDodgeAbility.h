@@ -3,6 +3,8 @@
 #include "Abilities/GameplayAbility.h"
 #include "TrainingDodgeAbility.generated.h"
 
+class UAnimMontage;
+
 UCLASS()
 class UTrainingDodgeAbility : public UGameplayAbility
 {
@@ -15,7 +17,13 @@ public:
 		FGameplayTagContainer* RelevantTags) const override;
 	virtual void ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* Info,
 		FGameplayAbilityActivationInfo Activation, const FGameplayEventData* Event) override;
+	virtual void EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* Info,
+		FGameplayAbilityActivationInfo Activation, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 private:
 	UFUNCTION() void FinishDodge();
+	UFUNCTION() void InterruptDodge();
+
+	UPROPERTY() TSoftObjectPtr<UAnimMontage> DodgeMontage;
+	FActiveGameplayEffectHandle Invulnerability;
 };

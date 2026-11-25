@@ -5,7 +5,9 @@
 #include "TrainingCharacter.h"
 
 UE_DEFINE_GAMEPLAY_TAG(TrainingAttack, "Ability.Training.Attack");
+UE_DEFINE_GAMEPLAY_TAG(TrainingDodge, "Ability.Training.Dodge");
 UE_DEFINE_GAMEPLAY_TAG(TrainingDodging, "State.Training.Dodging");
+UE_DEFINE_GAMEPLAY_TAG(TrainingDodgeInvulnerable, "State.Training.DodgeInvulnerable");
 UE_DEFINE_GAMEPLAY_TAG(TrainingHitStun, "State.Training.HitStun");
 
 namespace
@@ -34,7 +36,7 @@ void UCombatAttributes::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	{
 		const float Damage = FMath::Max(0.f, GetIncomingDamage());
 		SetIncomingDamage(0.f);
-		if (Damage <= 0.f || Data.Target.HasMatchingGameplayTag(TrainingDodging)) return;
+		if (Damage <= 0.f || Data.Target.HasMatchingGameplayTag(TrainingDodgeInvulnerable)) return;
 
 		const float PreviousHealth = GetHealth();
 		SetHealth(FMath::Clamp(PreviousHealth - Damage, 0.f, GetMaxHealth()));
@@ -42,8 +44,9 @@ void UCombatAttributes::PostGameplayEffectExecute(const FGameplayEffectModCallba
 		{
 			const auto Stun = Data.Target.MakeOutgoingSpec(UTrainingHitStunEffect::StaticClass(), 1.f, Data.EffectSpec.GetContext());
 			if (Stun.IsValid()) Data.Target.ApplyGameplayEffectSpecToSelf(*Stun.Data);
-			const FGameplayTagContainer AttackTags(TrainingAttack);
-			Data.Target.CancelAbilities(&AttackTags);
+			FGameplayTagContainer Interruptible(TrainingAttack);
+			Interruptible.AddTag(TrainingDodge);
+			Data.Target.CancelAbilities(&Interruptible);
 		}
 	}
 }
@@ -110,4 +113,15 @@ UHeavyStrikeCost::UHeavyStrikeCost()
 UTrainingDodgeCost::UTrainingDodgeCost()
 {
 	ConfigureInstantModifier(*this, UCombatAttributes::GetStaminaAttribute(), -24.f);
+}
+
+UTrainingDodgeInvulnerabilityEffect::UTrainingDodgeInvulnerabilityEffect()
+{
+	DurationPolicy = EGameplayEffectDurationType::HasDuration;
+	DurationMagnitude = FScalableFloat(0.24f);
+	auto* Tags = CreateDefaultSubobject<UTargetTagsGameplayEffectComponent>(TEXT("DodgeInvulnerable"));
+	FInheritedTagContainer Changes;
+	Changes.AddTag(TrainingDodgeInvulnerable);
+	Tags->SetAndApplyTargetTagChanges(Changes);
+	GEComponents.Add(Tags);
 }
