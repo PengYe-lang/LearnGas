@@ -3,7 +3,7 @@
 #include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "TrainingCharacter.h"
-#include "TrainingDummy.h"
+#include "TrainingDefeatReward.h"
 
 UE_DEFINE_GAMEPLAY_TAG(TrainingBurning, "Status.Training.Burning");
 UE_DEFINE_GAMEPLAY_TAG(TrainingAttack, "Ability.Training.Attack");
@@ -45,9 +45,10 @@ void UCombatAttributes::PostGameplayEffectExecute(const FGameplayEffectModCallba
 		SetHealth(FMath::Clamp(PreviousHealth - Damage, 0.f, GetMaxHealth()));
 		if (PreviousHealth > 0.f && GetHealth() <= 0.f)
 		{
-			if (auto* Dummy = Cast<ATrainingDummy>(Data.Target.GetAvatarActor()))
+			AActor* Avatar = Data.Target.GetAvatarActor();
+			if (const auto* Reward = Avatar ? Avatar->FindComponentByClass<UTrainingDefeatReward>() : nullptr)
 			{
-				Dummy->AwardDefeatExperience(Data.EffectSpec.GetContext());
+				Reward->Grant(Data.EffectSpec.GetContext());
 			}
 		}
 		if (Data.EffectSpec.GetPeriod() <= 0.f && GetHealth() < PreviousHealth && Cast<ATrainingCharacter>(Data.Target.GetAvatarActor()))

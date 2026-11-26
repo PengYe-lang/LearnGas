@@ -4,11 +4,12 @@
 #include "Components/StaticMeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "TimerManager.h"
-#include "TrainingProgressionAttributes.h"
+#include "TrainingDefeatReward.h"
 
 ATrainingDummy::ATrainingDummy()
 {
 	bReplicates = true;
+	CreateDefaultSubobject<UTrainingDefeatReward>(TEXT("DefeatReward"));
 	auto* Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("TargetCollision"));
 	SetRootComponent(Capsule);
 	Capsule->InitCapsuleSize(42.f, 88.f);
@@ -69,17 +70,6 @@ void ATrainingDummy::HealthChanged(const FOnAttributeChangeData& Change)
 		AbilitySystem->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(TrainingBurning));
 		GetWorldTimerManager().SetTimer(ResetTimer, this, &ThisClass::RestoreHealth, 2.f);
 	}
-}
-
-void ATrainingDummy::AwardDefeatExperience(const FGameplayEffectContextHandle& DamageContext)
-{
-	if (!HasAuthority()) return;
-
-	UAbilitySystemComponent* Source = DamageContext.GetInstigatorAbilitySystemComponent();
-	if (!Source || !Source->HasAttributeSetForAttribute(UTrainingProgressionAttributes::GetExperienceAttribute())) return;
-
-	const auto Reward = Source->MakeOutgoingSpec(UTrainingDummyExperience::StaticClass(), 1.f, Source->MakeEffectContext());
-	if (Reward.IsValid()) Source->ApplyGameplayEffectSpecToSelf(*Reward.Data);
 }
 
 void ATrainingDummy::RestoreHealth()

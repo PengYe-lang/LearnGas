@@ -1,4 +1,5 @@
 #include "TrainingHUD.h"
+#include "TrainingSentinel.h"
 #include "TrainingSkillCatalog.h"
 #include "TrainingDummy.h"
 #include "TrainingPulse.h"
@@ -99,6 +100,17 @@ void ATrainingHUD::DrawHUD()
 		{
 			Text(Screen.X, Screen.Y, It->IsWindingUp() ? TEXT("脉冲即将释放") : TEXT("受击打断测试区"), 15, true);
 		}
+	}
+	for (TActorIterator<ATrainingSentinel> It(GetWorld()); It; ++It)
+	{
+		FVector2D Screen;
+		if (!PlayerOwner->ProjectWorldLocationToScreen(It->GetActorLocation() + FVector(0,0,112), Screen, true)) continue;
+		const auto Phase = It->GetPhase();
+		const TCHAR* Label = Phase == ETrainingSentinelPhase::Down ? TEXT("守卫已倒下")
+			: Phase == ETrainingSentinelPhase::Windup ? TEXT("守卫蓄力 · 准备闪避")
+			: Phase == ETrainingSentinelPhase::Swing ? TEXT("守卫出拳") : TEXT("陪练守卫");
+		const float HP = It->GetAbilitySystemComponent()->GetNumericAttribute(UCombatAttributes::GetHealthAttribute());
+		Text(Screen.X, Screen.Y, FString::Printf(TEXT("%s   %.0f"), Label, HP), 15, true);
 	}
 	for (TActorIterator<ATrainingDummy> It(GetWorld()); It; ++It)
 	{
