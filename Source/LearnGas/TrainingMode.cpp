@@ -132,6 +132,7 @@ void ATrainingPlayerState::LoadCheckpoint()
 
 	AbilitySystem->CancelAbilities();
 	AbilitySystem->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(TrainingHitStun));
+	AbilitySystem->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(TrainingBurning));
 	if (auto* Character = Cast<ATrainingCharacter>(AbilitySystem->GetAvatarActor()))
 	{
 		Character->StopAnimMontage();

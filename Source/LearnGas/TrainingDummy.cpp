@@ -66,6 +66,7 @@ void ATrainingDummy::HealthChanged(const FOnAttributeChangeData& Change)
 {
 	if (Change.OldValue > 0.f && Change.NewValue <= 0.f)
 	{
+		AbilitySystem->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(TrainingBurning));
 		GetWorldTimerManager().SetTimer(ResetTimer, this, &ThisClass::RestoreHealth, 2.f);
 	}
 }

@@ -14,6 +14,10 @@ UTrainingArmorBuff::UTrainingArmorBuff()
 	Bonus.ModifierOp = EGameplayModOp::Additive;
 	Bonus.Attribute = UCombatAttributes::GetArmorAttribute();
 	Bonus.ModifierMagnitude = FScalableFloat(25.f);
+	auto& Resistance = Modifiers.AddDefaulted_GetRef();
+	Resistance.Attribute = UCombatAttributes::GetFireResistanceAttribute();
+	Resistance.ModifierOp = EGameplayModOp::Additive;
+	Resistance.ModifierMagnitude = FScalableFloat(20.f);
 }
 
 ATrainingArmorZone::ATrainingArmorZone()

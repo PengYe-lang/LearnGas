@@ -235,6 +235,13 @@ void ULightStrikeAbility::SampleStrike(const UAnimSequenceBase* Animation, FName
 			}
 			Damage.Data->GetContext().AddHitResult(Hit);
 			GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(*Damage.Data, TargetASC);
+			const auto* State = Character->GetPlayerState<ATrainingPlayerState>();
+			if (Section == StrikeSections[2] && State && State->HasGauntlets()
+				&& TargetASC->GetNumericAttribute(UCombatAttributes::GetHealthAttribute()) > 0.f)
+			{
+				auto Burn = MakeOutgoingGameplayEffectSpec(UTrainingBurn::StaticClass(), GetAbilityLevel());
+				if (Burn.IsValid()) GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(*Burn.Data, TargetASC);
+			}
 		}
 	}
 }

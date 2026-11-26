@@ -41,8 +41,8 @@ void ATrainingHUD::DrawHUD()
 		{
 			const float HP = ASC->GetNumericAttribute(UCombatAttributes::GetHealthAttribute());
 			const float Stamina = ASC->GetNumericAttribute(UCombatAttributes::GetStaminaAttribute());
-			Text(Margin, Margin, FString::Printf(TEXT("生命 %.0f    体力 %.0f / 100    护甲 %.0f"), HP, Stamina,
-				ASC->GetNumericAttribute(UCombatAttributes::GetArmorAttribute())), 18);
+			Text(Margin, Margin, FString::Printf(TEXT("生命 %.0f    体力 %.0f / 100    护甲 %.0f    火抗 %.0f%%"), HP, Stamina,
+				ASC->GetNumericAttribute(UCombatAttributes::GetArmorAttribute()), ASC->GetNumericAttribute(UCombatAttributes::GetFireResistanceAttribute())), 18);
 			DrawRect(FLinearColor(.03f, .04f, .05f), Margin, Margin + 36 * Scale, 220 * Scale, 7 * Scale);
 			DrawRect(FLinearColor(.95f, .73f, .25f), Margin, Margin + 36 * Scale,
 				220 * Scale * Stamina / UCombatAttributes::StaminaCapacity, 7 * Scale);
@@ -71,7 +71,7 @@ void ATrainingHUD::DrawHUD()
 				}
 				Text(Margin, Margin + 82 * Scale, HeavyStrikeStatus, 15);
 				Text(Margin, Margin + 108 * Scale, FString::Printf(TEXT("%s   ×%g    Q 切换"),
-					State->HasGauntlets() ? TEXT("训练拳套") : TEXT("徒手"), State->GetWeaponMultiplier()), 15);
+					State->HasGauntlets() ? TEXT("训练拳套 · 轻三点燃") : TEXT("徒手"), State->GetWeaponMultiplier()), 15);
 				const FString Notice = State->GetCheckpointNotice();
 				if (!Notice.IsEmpty()) Text(Margin, Canvas->SizeY - 78 * Scale, Notice, 15);
 			}
@@ -96,7 +96,8 @@ void ATrainingHUD::DrawHUD()
 		const UCombatAttributes* Attr = It->GetAttributes();
 		const float Width = 154 * Scale;
 		const float X = Screen.X - Width * .5f;
-		Text(Screen.X, Screen.Y - 28 * Scale, FString::Printf(TEXT("训练靶   %.0f / %.0f"), Attr->GetHealth(), Attr->GetMaxHealth()), 14, true);
+		Text(Screen.X, Screen.Y - 28 * Scale, FString::Printf(TEXT("%s   %.0f / %.0f"),
+			It->GetAbilitySystemComponent()->HasMatchingGameplayTag(TrainingBurning) ? TEXT("训练靶 · 灼烧") : TEXT("训练靶"), Attr->GetHealth(), Attr->GetMaxHealth()), 14, true);
 		DrawRect(FLinearColor(.02f,.035f,.05f,.9f), X, Screen.Y, Width, 7 * Scale);
 		DrawRect(FLinearColor(.12f,.88f,.64f), X, Screen.Y, Width * Attr->GetHealth() / Attr->GetMaxHealth(), 7 * Scale);
 	}

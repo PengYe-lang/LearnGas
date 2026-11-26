@@ -5,6 +5,7 @@
 #include "TrainingCharacter.h"
 #include "TrainingDummy.h"
 
+UE_DEFINE_GAMEPLAY_TAG(TrainingBurning, "Status.Training.Burning");
 UE_DEFINE_GAMEPLAY_TAG(TrainingAttack, "Ability.Training.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TrainingWeaponMultiplier, "Data.Training.WeaponMultiplier");
 UE_DEFINE_GAMEPLAY_TAG(TrainingDodge, "Ability.Training.Dodge");
@@ -36,8 +37,7 @@ void UCombatAttributes::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	Super::PostGameplayEffectExecute(Data);
 	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
 	{
-		const float Multiplier = Data.EffectSpec.GetSetByCallerMagnitude(TrainingWeaponMultiplier, false, 1.f);
-		const float Damage = FMath::Max(0.f, GetIncomingDamage() * Multiplier * 100.f / (100.f + FMath::Max(0.f, GetArmor())));
+		const float Damage = FMath::Max(0.f, GetIncomingDamage());
 		SetIncomingDamage(0.f);
 		if (Damage <= 0.f || Data.Target.HasMatchingGameplayTag(TrainingDodgeInvulnerable)) return;
 
@@ -50,7 +50,7 @@ void UCombatAttributes::PostGameplayEffectExecute(const FGameplayEffectModCallba
 				Dummy->AwardDefeatExperience(Data.EffectSpec.GetContext());
 			}
 		}
-		if (GetHealth() < PreviousHealth && Cast<ATrainingCharacter>(Data.Target.GetAvatarActor()))
+		if (Data.EffectSpec.GetPeriod() <= 0.f && GetHealth() < PreviousHealth && Cast<ATrainingCharacter>(Data.Target.GetAvatarActor()))
 		{
 			const auto Stun = Data.Target.MakeOutgoingSpec(UTrainingHitStunEffect::StaticClass(), 1.f, Data.EffectSpec.GetContext());
 			if (Stun.IsValid()) Data.Target.ApplyGameplayEffectSpecToSelf(*Stun.Data);
@@ -64,10 +64,16 @@ void UCombatAttributes::PostGameplayEffectExecute(const FGameplayEffectModCallba
 void UCombatAttributes::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCombatAttributes, FireResistance, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCombatAttributes, Armor, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCombatAttributes, Health, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCombatAttributes, MaxHealth, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCombatAttributes, Stamina, COND_None, REPNOTIFY_Always);
+}
+
+void UCombatAttributes::OnRep_FireResistance(const FGameplayAttributeData& Previous)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCombatAttributes, FireResistance, Previous);
 }
 
 void UCombatAttributes::OnRep_Armor(const FGameplayAttributeData& Previous)
@@ -87,7 +93,7 @@ void UCombatAttributes::OnRep_MaxHealth(const FGameplayAttributeData& Previous)
 
 ULightStrikeDamage::ULightStrikeDamage()
 {
-	ConfigureInstantModifier(*this, UCombatAttributes::GetIncomingDamageAttribute(), 20.f);
+	BaseDamage = 20.f;
 }
 
 void UCombatAttributes::OnRep_Stamina(const FGameplayAttributeData& Previous)
@@ -97,12 +103,12 @@ void UCombatAttributes::OnRep_Stamina(const FGameplayAttributeData& Previous)
 
 UHeavyStrikeDamage::UHeavyStrikeDamage()
 {
-	ConfigureInstantModifier(*this, UCombatAttributes::GetIncomingDamageAttribute(), 45.f);
+	BaseDamage = 45.f;
 }
 
 UTrainingPulseDamage::UTrainingPulseDamage()
 {
-	ConfigureInstantModifier(*this, UCombatAttributes::GetIncomingDamageAttribute(), 10.f);
+	BaseDamage = 10.f;
 }
 
 UTrainingHitStunEffect::UTrainingHitStunEffect()

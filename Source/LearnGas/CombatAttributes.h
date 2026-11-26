@@ -2,10 +2,11 @@
 
 #include "AbilitySystemComponent.h"
 #include "AttributeSet.h"
-#include "GameplayEffect.h"
+#include "TrainingDamage.h"
 #include "NativeGameplayTags.h"
 #include "CombatAttributes.generated.h"
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingBurning);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingAttack);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingWeaponMultiplier);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingDodge);
@@ -48,6 +49,11 @@ public:
 	GAMEPLAYATTRIBUTE_PROPERTY_GETTER(UCombatAttributes, Armor)
 	GAMEPLAYATTRIBUTE_VALUE_GETTER(Armor)
 
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_FireResistance, Category="Combat")
+	FGameplayAttributeData FireResistance;
+	GAMEPLAYATTRIBUTE_PROPERTY_GETTER(UCombatAttributes, FireResistance)
+	GAMEPLAYATTRIBUTE_VALUE_GETTER(FireResistance)
+
 	UPROPERTY()
 	FGameplayAttributeData IncomingDamage;
 	GAMEPLAYATTRIBUTE_PROPERTY_GETTER(UCombatAttributes, IncomingDamage)
@@ -55,6 +61,7 @@ public:
 	GAMEPLAYATTRIBUTE_VALUE_SETTER(IncomingDamage)
 
 private:
+	UFUNCTION() void OnRep_FireResistance(const FGameplayAttributeData& Previous);
 	UFUNCTION() void OnRep_Armor(const FGameplayAttributeData& Previous);
 	UFUNCTION() void OnRep_Health(const FGameplayAttributeData& Previous);
 	UFUNCTION() void OnRep_MaxHealth(const FGameplayAttributeData& Previous);
@@ -62,7 +69,7 @@ private:
 };
 
 UCLASS()
-class UHeavyStrikeDamage : public UGameplayEffect
+class UHeavyStrikeDamage : public UTrainingDamageEffect
 {
 	GENERATED_BODY()
 public:
@@ -70,7 +77,7 @@ public:
 };
 
 UCLASS()
-class UTrainingPulseDamage : public UGameplayEffect
+class UTrainingPulseDamage : public UTrainingDamageEffect
 {
 	GENERATED_BODY()
 public:
@@ -118,7 +125,7 @@ public:
 };
 
 UCLASS()
-class LEARNGAS_API ULightStrikeDamage : public UGameplayEffect
+class LEARNGAS_API ULightStrikeDamage : public UTrainingDamageEffect
 {
 	GENERATED_BODY()
 public:
