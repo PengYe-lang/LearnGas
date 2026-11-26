@@ -5,6 +5,21 @@
 #include "TrainingHUD.h"
 #include "TrainingProgressionAttributes.h"
 #include "TimerManager.h"
+#include "Net/UnrealNetwork.h"
+
+void ATrainingPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ATrainingPlayerState, bGauntlets);
+}
+
+void ATrainingPlayerState::ServerSwitchWeapon_Implementation()
+{
+	const auto* Character = Cast<ATrainingCharacter>(AbilitySystem->GetAvatarActor());
+	if (!Character || Character->ActiveStrike.IsValid() || AbilitySystem->HasMatchingGameplayTag(TrainingDodging)
+		|| AbilitySystem->HasMatchingGameplayTag(TrainingHitStun)) return;
+	bGauntlets = !bGauntlets;
+}
 
 ATrainingPlayerState::ATrainingPlayerState()
 {

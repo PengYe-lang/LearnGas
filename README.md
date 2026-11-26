@@ -25,6 +25,8 @@
 
 ## 经验、升级与招式解锁
 
+按 Q 可在徒手和训练拳套之间切换。武器栏显示当前伤害倍率。训练拳套默认使用 1.5 倍，数值在 `Config/DefaultGame.ini` 的 `GauntletMultiplier` 中配置。出招和接招宽限期间需先收招才能换装。
+
 1. 在 `MeleeTraining` 用轻击击倒训练靶。每次击倒奖励 50 经验，训练靶约两秒后恢复。
 2. 累计 100 经验后升到 2 级并获得 1 点技能点。按 `K` 花费 1 点学习重击，界面会提示轻二收招时按右键。
 3. 经验计入 `PlayerState` 上的 `UTrainingProgressionAttributes`，每累计 100 经验升一级并获得 1 点技能点。已学招式以 GAS 的 Ability Spec 为准。同一场游戏换 Pawn 会继续使用该玩家的进度，重新开始 PIE 会回到 1 级。

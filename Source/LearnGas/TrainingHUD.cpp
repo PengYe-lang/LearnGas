@@ -67,10 +67,12 @@ void ATrainingHUD::DrawHUD()
 						State->HeavyStrikeRequiredLevel, State->HeavyStrikeSkillPointCost, UTrainingDummyExperience::ExperiencePerDefeat);
 				}
 				Text(Margin, Margin + 82 * Scale, HeavyStrikeStatus, 15);
+				Text(Margin, Margin + 108 * Scale, FString::Printf(TEXT("%s   ×%g    Q 切换"),
+					State->HasGauntlets() ? TEXT("训练拳套") : TEXT("徒手"), State->GetWeaponMultiplier()), 15);
 			}
 			if (ASC->HasMatchingGameplayTag(TrainingHitStun))
 			{
-				Text(Margin, Margin + 108 * Scale, TEXT("受击硬直"), 15);
+				Text(Margin, Margin + 138 * Scale, TEXT("受击硬直"), 15);
 			}
 		}
 	}

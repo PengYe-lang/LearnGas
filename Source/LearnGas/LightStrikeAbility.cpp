@@ -6,6 +6,7 @@
 #include "Animation/AnimMontage.h"
 #include "CombatAttributes.h"
 #include "TrainingCharacter.h"
+#include "TrainingMode.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
 
@@ -228,6 +229,10 @@ void ULightStrikeAbility::SampleStrike(const UAnimSequenceBase* Animation, FName
 		if (Damage.IsValid())
 		{
 			HitActors.Add(Target);
+			if (const auto* State = Character->GetPlayerState<ATrainingPlayerState>())
+			{
+				Damage.Data->SetSetByCallerMagnitude(TrainingWeaponMultiplier, State->GetWeaponMultiplier());
+			}
 			Damage.Data->GetContext().AddHitResult(Hit);
 			GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(*Damage.Data, TargetASC);
 		}

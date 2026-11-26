@@ -122,6 +122,7 @@ void ATrainingCharacter::SetupPlayerInputComponent(UInputComponent* Input)
 	Enhanced->BindAction(MouseAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 	Enhanced->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 	Input->BindKey(EKeys::K, IE_Pressed, this, &ThisClass::LearnHeavyStrike);
+	Input->BindKey(EKeys::Q, IE_Pressed, this, &ThisClass::SwitchWeapon);
 	if (auto* Attack = StrikeAction.LoadSynchronous())
 	{
 		Enhanced->BindAction(Attack, ETriggerEvent::Started, this, &ThisClass::Strike);
@@ -187,4 +188,9 @@ void ATrainingCharacter::Dodge()
 	{
 		ASC->TryActivateAbilityByClass(UTrainingDodgeAbility::StaticClass());
 	}
+}
+
+void ATrainingCharacter::SwitchWeapon()
+{
+	if (auto* State = GetPlayerState<ATrainingPlayerState>()) State->ServerSwitchWeapon();
 }

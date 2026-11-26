@@ -6,6 +6,7 @@
 #include "TrainingDummy.h"
 
 UE_DEFINE_GAMEPLAY_TAG(TrainingAttack, "Ability.Training.Attack");
+UE_DEFINE_GAMEPLAY_TAG(TrainingWeaponMultiplier, "Data.Training.WeaponMultiplier");
 UE_DEFINE_GAMEPLAY_TAG(TrainingDodge, "Ability.Training.Dodge");
 UE_DEFINE_GAMEPLAY_TAG(TrainingDodging, "State.Training.Dodging");
 UE_DEFINE_GAMEPLAY_TAG(TrainingDodgeInvulnerable, "State.Training.DodgeInvulnerable");
@@ -35,7 +36,8 @@ void UCombatAttributes::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	Super::PostGameplayEffectExecute(Data);
 	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
 	{
-		const float Damage = FMath::Max(0.f, GetIncomingDamage());
+		const float Multiplier = Data.EffectSpec.GetSetByCallerMagnitude(TrainingWeaponMultiplier, false, 1.f);
+		const float Damage = FMath::Max(0.f, GetIncomingDamage() * Multiplier);
 		SetIncomingDamage(0.f);
 		if (Damage <= 0.f || Data.Target.HasMatchingGameplayTag(TrainingDodgeInvulnerable)) return;
 

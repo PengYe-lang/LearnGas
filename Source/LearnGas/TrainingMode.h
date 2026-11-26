@@ -9,7 +9,7 @@ class UCombatAttributes;
 class UTrainingProgressionAttributes;
 struct FOnAttributeChangeData;
 
-UCLASS()
+UCLASS(Config=Game)
 class LEARNGAS_API ATrainingPlayerState : public APlayerState, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
@@ -25,8 +25,14 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void ServerLearnHeavyStrike();
+	UFUNCTION(Server, Reliable) void ServerSwitchWeapon();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	bool HasGauntlets() const { return bGauntlets; }
+	float GetWeaponMultiplier() const { return bGauntlets ? FMath::Max(0.f, GauntletMultiplier) : 1.f; }
 
 private:
+	UPROPERTY(Replicated) bool bGauntlets = false;
+	UPROPERTY(Config) float GauntletMultiplier = 1.5f;
 	UPROPERTY(VisibleAnywhere) TObjectPtr<UAbilitySystemComponent> AbilitySystem;
 	UPROPERTY() TObjectPtr<UCombatAttributes> Attributes;
 	UPROPERTY() TObjectPtr<UTrainingProgressionAttributes> Progression;

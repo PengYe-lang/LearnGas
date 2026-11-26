@@ -7,6 +7,7 @@
 #include "CombatAttributes.generated.h"
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingAttack);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingWeaponMultiplier);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingDodge);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingDodging);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingDodgeInvulnerable);
