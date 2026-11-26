@@ -34,6 +34,7 @@ private:
 	void LearnWard();
 	void LearnFirebolt();
 	void CastFirebolt();
+	void StartTrial();
 	void ToggleWard();
 	void ToggleSkillBook();
 	void SwitchWeapon();

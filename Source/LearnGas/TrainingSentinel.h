@@ -27,12 +27,15 @@ public:
 	ATrainingCharacter* GetTarget() const { return Target.Get(); }
 	void SetPhase(ETrainingSentinelPhase NewPhase);
 	void FinishAttack();
+	void SetChallenger(ATrainingCharacter* Player);
 private:
 	UPROPERTY(VisibleAnywhere) TObjectPtr<UAbilitySystemComponent> ASC;
 	UPROPERTY() TObjectPtr<UCombatAttributes> Attributes;
 	UPROPERTY(ReplicatedUsing=OnRep_Phase) ETrainingSentinelPhase Phase = ETrainingSentinelPhase::Ready;
 	UFUNCTION() void OnRep_Phase();
 	TWeakObjectPtr<ATrainingCharacter> Target;
+	TWeakObjectPtr<ATrainingCharacter> Challenger;
+	bool bInEncounter = false;
 	FVector Home;
 	double NextAttackTime = 0.;
 	FTimerHandle ResetTimer;

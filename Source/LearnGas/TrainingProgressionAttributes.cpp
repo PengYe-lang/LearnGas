@@ -53,3 +53,12 @@ UTrainingDummyExperience::UTrainingDummyExperience()
 	Reward.ModifierOp = EGameplayModOp::Additive;
 	Reward.ModifierMagnitude = FScalableFloat(ExperiencePerDefeat);
 }
+
+UTrainingTrialExperience::UTrainingTrialExperience()
+{
+	DurationPolicy = EGameplayEffectDurationType::Instant;
+	FGameplayModifierInfo& Reward = Modifiers.AddDefaulted_GetRef();
+	Reward.Attribute = UTrainingProgressionAttributes::GetExperienceAttribute();
+	Reward.ModifierOp = EGameplayModOp::Additive;
+	Reward.ModifierMagnitude = FScalableFloat(100.f);
+}

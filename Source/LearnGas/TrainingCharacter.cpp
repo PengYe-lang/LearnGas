@@ -130,6 +130,7 @@ void ATrainingCharacter::SetupPlayerInputComponent(UInputComponent* Input)
 	Enhanced->BindAction(MouseAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 	Enhanced->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 	Input->BindKey(EKeys::Tab, IE_Pressed, this, &ThisClass::ToggleSkillBook);
+	Input->BindKey(EKeys::E, IE_Pressed, this, &ThisClass::StartTrial);
 	Input->BindKey(EKeys::B, IE_Pressed, this, &ThisClass::LearnFirebolt);
 	Input->BindKey(EKeys::R, IE_Pressed, this, &ThisClass::CastFirebolt);
 	Input->BindKey(EKeys::J, IE_Pressed, this, &ThisClass::LearnWard);
@@ -197,6 +198,11 @@ void ATrainingCharacter::LearnHeavyStrike()
 void ATrainingCharacter::LearnFirebolt()
 {
 	if (auto* State = GetPlayerState<ATrainingPlayerState>()) State->ServerLearnSkill(TrainingBoltSkill);
+}
+
+void ATrainingCharacter::StartTrial()
+{
+	if (auto* State = GetPlayerState<ATrainingPlayerState>()) State->ServerStartTrial();
 }
 
 void ATrainingCharacter::CastFirebolt()

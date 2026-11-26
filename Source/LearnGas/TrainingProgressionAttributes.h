@@ -42,6 +42,14 @@ private:
 };
 
 UCLASS()
+class UTrainingTrialExperience : public UGameplayEffect
+{
+	GENERATED_BODY()
+public:
+	UTrainingTrialExperience();
+};
+
+UCLASS()
 class UTrainingDummyExperience : public UGameplayEffect
 {
 	GENERATED_BODY()

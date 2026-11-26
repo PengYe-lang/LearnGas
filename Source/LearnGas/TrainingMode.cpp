@@ -1,6 +1,8 @@
 #include "TrainingMode.h"
 #include "TrainingSkillCatalog.h"
 #include "TrainingCheckpoint.h"
+#include "TrainingEncounter.h"
+#include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "CombatAttributes.h"
 #include "LightStrikeAbility.h"
@@ -14,6 +16,20 @@ void ATrainingPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ATrainingPlayerState, bGauntlets);
+	DOREPLIFETIME(ATrainingPlayerState, bTrialCleared);
+}
+
+void ATrainingPlayerState::ServerStartTrial_Implementation()
+{
+	auto* Character = Cast<ATrainingCharacter>(AbilitySystem->GetAvatarActor());
+	for (TActorIterator<ATrainingEncounter> It(GetWorld()); It; ++It) It->TryStart(Character);
+}
+
+void ATrainingPlayerState::RecordTrialClear()
+{
+	if (!HasAuthority() || bTrialCleared) return;
+	bTrialCleared = true;
+	AbilitySystem->ApplyGameplayEffectToSelf(GetDefault<UTrainingTrialExperience>(), 1, AbilitySystem->MakeEffectContext());
 }
 
 void ATrainingPlayerState::ServerSwitchWeapon_Implementation()
@@ -182,7 +198,8 @@ void ATrainingPlayerState::SaveCheckpoint()
 	auto* Save = NewObject<UTrainingCheckpoint>(this);
 	Save->Experience = FMath::RoundToInt(Progression->GetExperience());
 	Save->SkillPoints = FMath::RoundToInt(Progression->GetSkillPoints());
-	Save->Version = 2;
+	Save->Version = 3;
+	Save->bTrialCleared = bTrialCleared;
 	for (const auto& Skill : TrainingSkills::All())
 		if (HasSkill(Skill.Id)) Save->LearnedSkills.AddTag(Skill.Id);
 	if (IsWardEquipped()) Save->PassiveSkill = TrainingWardSkill;
@@ -210,6 +227,7 @@ void ATrainingPlayerState::LoadCheckpoint()
 		return;
 	}
 
+	for (TActorIterator<ATrainingEncounter> It(GetWorld()); It; ++It) It->AbandonFor(Cast<ATrainingCharacter>(AbilitySystem->GetAvatarActor()));
 	AbilitySystem->CancelAbilities();
 	AbilitySystem->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(TrainingHitStun));
 	AbilitySystem->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(TrainingBurning));
@@ -222,6 +240,7 @@ void ATrainingPlayerState::LoadCheckpoint()
 	Progression->SetLevel(1 + Save->Experience / UTrainingProgressionAttributes::ExperiencePerLevel);
 	Progression->SetSkillPoints(Save->SkillPoints);
 	bGauntlets = Save->bGauntlets;
+	bTrialCleared = Save->Version >= 3 && Save->bTrialCleared;
 	for (const auto& Skill : TrainingSkills::All())
 	{
 		auto* Spec = AbilitySystem->FindAbilitySpecFromClass(Skill.Ability);

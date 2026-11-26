@@ -16,6 +16,7 @@ public:
 	UPROPERTY() FGameplayTagContainer LearnedSkills;
 	UPROPERTY() FGameplayTag PassiveSkill;
 	bool HasSkill(FGameplayTag Id) const;
+	UPROPERTY() bool bTrialCleared = false;
 	UPROPERTY() bool bLearnedHeavy = false;
 	UPROPERTY() bool bGauntlets = false;
 	UPROPERTY() float Health = 0.f;

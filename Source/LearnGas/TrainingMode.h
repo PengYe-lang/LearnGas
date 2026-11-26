@@ -19,6 +19,9 @@ public:
 	bool CanLearn(FGameplayTag Id) const;
 	bool IsWardEquipped() const;
 	void RestorePassive();
+	UFUNCTION(Server,Reliable) void ServerStartTrial();
+	void RecordTrialClear();
+	bool HasClearedTrial() const { return bTrialCleared; }
 	UFUNCTION(Server, Reliable) void ServerLearnSkill(FGameplayTag Id);
 	UFUNCTION(Server, Reliable) void ServerToggleWard();
 
@@ -36,6 +39,7 @@ public:
 	FString GetCheckpointNotice() const;
 
 private:
+	UPROPERTY(Replicated) bool bTrialCleared = false;
 	UPROPERTY(Replicated) bool bGauntlets = false;
 	UPROPERTY(Config) float GauntletMultiplier = 1.5f;
 	UPROPERTY(VisibleAnywhere) TObjectPtr<UAbilitySystemComponent> AbilitySystem;

@@ -1,5 +1,6 @@
 #include "TrainingHUD.h"
 #include "TrainingSentinel.h"
+#include "TrainingEncounter.h"
 #include "TrainingSkillCatalog.h"
 #include "TrainingDummy.h"
 #include "TrainingPulse.h"
@@ -59,7 +60,7 @@ void ATrainingHUD::DrawHUD()
 					Level, CurrentExperience, Goal, Points), 15);
 				const FString HeavyStatus = State->HasSkill(TrainingHeavySkill) ? TEXT("重击已学会 · 轻二后按右键")
 					: State->CanLearn(TrainingHeavySkill) ? TEXT("K 学习重击") : TEXT("击倒训练靶 +50 经验");
-				Text(Margin, Margin + 82 * Scale, HeavyStatus + TEXT("    Tab 技能册"), 15);
+				Text(Margin, Margin + 82 * Scale, HeavyStatus + TEXT("    Tab 技能册") + (State->HasClearedTrial() ? TEXT("    守卫试炼已通关") : TEXT("")), 15);
 				if (State->HasSkill(TrainingBoltSkill))
 				{
 					const FVector2D Center(Canvas->SizeX * .5f, Canvas->SizeY * .5f);
@@ -104,6 +105,12 @@ void ATrainingHUD::DrawHUD()
 		{
 			Text(Screen.X, Screen.Y, It->IsWindingUp() ? TEXT("脉冲即将释放") : TEXT("受击打断测试区"), 15, true);
 		}
+	}
+	for (TActorIterator<ATrainingEncounter> It(GetWorld()); It; ++It)
+	{
+		FVector2D Screen;
+		if (PlayerOwner->ProjectWorldLocationToScreen(It->GetActorLocation() + FVector(0,0,115), Screen, true))
+			Text(Screen.X, Screen.Y, It->GetPrompt(), 15, true);
 	}
 	for (TActorIterator<ATrainingSentinel> It(GetWorld()); It; ++It)
 	{

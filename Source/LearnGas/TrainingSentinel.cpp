@@ -49,15 +49,22 @@ void ATrainingSentinel::BeginPlay()
 	}
 }
 
+void ATrainingSentinel::SetChallenger(ATrainingCharacter* Player)
+{
+	bInEncounter = true;
+	Challenger = Player;
+}
+
 void ATrainingSentinel::Tick(float Delta)
 {
 	Super::Tick(Delta);
 	if (!HasAuthority() || Phase != ETrainingSentinelPhase::Ready) return;
-	float Best = FMath::Square(NoticeRange);
+	float Best = FMath::Square(bInEncounter ? 1400.f : NoticeRange);
 	Target.Reset();
 	for (TActorIterator<ATrainingCharacter> It(GetWorld()); It; ++It)
 	{
-		if (FVector::DistSquared(Home, It->GetActorLocation()) > FMath::Square(Leash)) continue;
+		if (bInEncounter && *It != Challenger.Get()) continue;
+		if (!bInEncounter && FVector::DistSquared(Home, It->GetActorLocation()) > FMath::Square(Leash)) continue;
 		const auto* PlayerASC = It->GetAbilitySystemComponent();
 		if (!PlayerASC || PlayerASC->GetNumericAttribute(UCombatAttributes::GetHealthAttribute()) <= 0) continue;
 		const float Distance = FVector::DistSquared(It->GetActorLocation(), GetActorLocation());
@@ -110,7 +117,7 @@ void ATrainingSentinel::HealthChanged(const FOnAttributeChangeData& Change)
 	ASC->CancelAbilities();
 	ASC->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(TrainingBurning));
 	GetCharacterMovement()->DisableMovement();
-	GetWorldTimerManager().SetTimer(ResetTimer, this, &ThisClass::ResetOpponent, 5.f);
+	if (!bInEncounter) GetWorldTimerManager().SetTimer(ResetTimer, this, &ThisClass::ResetOpponent, 5.f);
 }
 
 void ATrainingSentinel::ResetOpponent()

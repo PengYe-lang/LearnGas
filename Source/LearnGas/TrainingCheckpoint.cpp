@@ -18,8 +18,8 @@ bool UTrainingCheckpoint::HasSkill(FGameplayTag Id) const
 bool UTrainingCheckpoint::IsValidProgress() const
 {
 	const int32 EarnedPoints = Experience / UTrainingProgressionAttributes::ExperiencePerLevel;
-	if (Version != 1 && Version != 2) return false;
-	if (Version == 2)
+	if (Version < 1 || Version > 3) return false;
+	if (Version >= 2)
 	{
 		if (PassiveSkill.IsValid() && (PassiveSkill != TrainingWardSkill || !HasSkill(PassiveSkill))) return false;
 		for (auto Id : LearnedSkills) if (!TrainingSkills::Find(Id)) return false;
