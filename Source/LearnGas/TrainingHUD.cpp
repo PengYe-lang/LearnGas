@@ -32,7 +32,9 @@ void ATrainingHUD::DrawHUD()
 	};
 
 	const float Margin = 24.f * Scale;
-	Text(Margin, Canvas->SizeY - 42 * Scale, TEXT("WASD 移动    左键 轻击    左 Shift 闪步"), 15);
+	Text(Margin, Canvas->SizeY - 42 * Scale, GetNetMode() == NM_Standalone
+		? TEXT("WASD 移动    左键 轻击    左 Shift 闪步    F6 保存    F9 读取")
+		: TEXT("WASD 移动    左键 轻击    左 Shift 闪步"), 15);
 	if (const auto* Character = Cast<ATrainingCharacter>(PlayerOwner->GetPawn()))
 	{
 		if (const auto* ASC = Character->GetAbilitySystemComponent())
@@ -69,6 +71,8 @@ void ATrainingHUD::DrawHUD()
 				Text(Margin, Margin + 82 * Scale, HeavyStrikeStatus, 15);
 				Text(Margin, Margin + 108 * Scale, FString::Printf(TEXT("%s   ×%g    Q 切换"),
 					State->HasGauntlets() ? TEXT("训练拳套") : TEXT("徒手"), State->GetWeaponMultiplier()), 15);
+				const FString Notice = State->GetCheckpointNotice();
+				if (!Notice.IsEmpty()) Text(Margin, Canvas->SizeY - 78 * Scale, Notice, 15);
 			}
 			if (ASC->HasMatchingGameplayTag(TrainingHitStun))
 			{

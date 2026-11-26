@@ -29,6 +29,10 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	bool HasGauntlets() const { return bGauntlets; }
 	float GetWeaponMultiplier() const { return bGauntlets ? FMath::Max(0.f, GauntletMultiplier) : 1.f; }
+	void SaveCheckpoint();
+	void LoadCheckpoint();
+	void RestoreCheckpointOnEntry();
+	FString GetCheckpointNotice() const;
 
 private:
 	UPROPERTY(Replicated) bool bGauntlets = false;
@@ -37,6 +41,10 @@ private:
 	UPROPERTY() TObjectPtr<UCombatAttributes> Attributes;
 	UPROPERTY() TObjectPtr<UTrainingProgressionAttributes> Progression;
 	FTimerHandle StaminaRegen;
+	bool bCheckedInitialCheckpoint = false;
+	FString CheckpointNotice;
+	double NoticeEndsAt = 0.;
+	void ShowCheckpointNotice(const TCHAR* Message);
 
 	void OnStaminaChanged(const FOnAttributeChangeData& Change);
 	void RegenerateStamina();

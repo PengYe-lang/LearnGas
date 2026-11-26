@@ -32,6 +32,8 @@ private:
 	void HeavyStrike();
 	void LearnHeavyStrike();
 	void SwitchWeapon();
+	void SaveCheckpoint();
+	void LoadCheckpoint();
 	void Dodge();
 
 	UPROPERTY() TObjectPtr<UInputMappingContext> MovementContext;

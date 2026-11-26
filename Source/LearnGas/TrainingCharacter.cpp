@@ -75,6 +75,7 @@ void ATrainingCharacter::InitializeAbilitySystem()
 			{
 				if (!ASC->FindAbilitySpecFromClass(Ability)) ASC->GiveAbility(FGameplayAbilitySpec(Ability, 1));
 			}
+			if (auto* State = GetPlayerState<ATrainingPlayerState>()) State->RestoreCheckpointOnEntry();
 		}
 	}
 }
@@ -123,6 +124,8 @@ void ATrainingCharacter::SetupPlayerInputComponent(UInputComponent* Input)
 	Enhanced->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 	Input->BindKey(EKeys::K, IE_Pressed, this, &ThisClass::LearnHeavyStrike);
 	Input->BindKey(EKeys::Q, IE_Pressed, this, &ThisClass::SwitchWeapon);
+	Input->BindKey(EKeys::F6, IE_Pressed, this, &ThisClass::SaveCheckpoint);
+	Input->BindKey(EKeys::F9, IE_Pressed, this, &ThisClass::LoadCheckpoint);
 	if (auto* Attack = StrikeAction.LoadSynchronous())
 	{
 		Enhanced->BindAction(Attack, ETriggerEvent::Started, this, &ThisClass::Strike);
@@ -193,4 +196,14 @@ void ATrainingCharacter::Dodge()
 void ATrainingCharacter::SwitchWeapon()
 {
 	if (auto* State = GetPlayerState<ATrainingPlayerState>()) State->ServerSwitchWeapon();
+}
+
+void ATrainingCharacter::SaveCheckpoint()
+{
+	if (auto* State = GetPlayerState<ATrainingPlayerState>()) State->SaveCheckpoint();
+}
+
+void ATrainingCharacter::LoadCheckpoint()
+{
+	if (auto* State = GetPlayerState<ATrainingPlayerState>()) State->LoadCheckpoint();
 }
