@@ -1,4 +1,5 @@
 #include "TrainingMode.h"
+#include "TrainingSkillCatalog.h"
 #include "TrainingCheckpoint.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "CombatAttributes.h"
@@ -58,27 +59,52 @@ void ATrainingPlayerState::OnStaminaChanged(const FOnAttributeChangeData& Change
 	}
 }
 
-bool ATrainingPlayerState::HasLearnedHeavyStrike() const
+bool ATrainingPlayerState::HasSkill(FGameplayTag Id) const
 {
-	return AbilitySystem->FindAbilitySpecFromClass(UHeavyStrikeAbility::StaticClass()) != nullptr;
+	const auto* Skill = TrainingSkills::Find(Id);
+	return Skill && AbilitySystem->FindAbilitySpecFromClass(Skill->Ability);
 }
 
-bool ATrainingPlayerState::CanLearnHeavyStrike() const
+bool ATrainingPlayerState::CanLearn(FGameplayTag Id) const
 {
-	return !HasLearnedHeavyStrike()
-		&& Progression->GetLevel() >= HeavyStrikeRequiredLevel
-		&& Progression->GetSkillPoints() >= HeavyStrikeSkillPointCost;
+	const auto* Skill = TrainingSkills::Find(Id);
+	return Skill && !HasSkill(Id) && Progression->GetLevel() >= Skill->RequiredLevel && Progression->GetSkillPoints() >= Skill->Cost;
 }
 
-void ATrainingPlayerState::ServerLearnHeavyStrike_Implementation()
+void ATrainingPlayerState::ServerLearnSkill_Implementation(FGameplayTag Id)
 {
-	if (!HasAuthority() || !CanLearnHeavyStrike()) return;
+	if (!CanLearn(Id)) return;
+	const auto& Skill = *TrainingSkills::Find(Id);
+	if (AbilitySystem->GiveAbility(FGameplayAbilitySpec(Skill.Ability, 1)).IsValid())
+		Progression->SetSkillPoints(Progression->GetSkillPoints() - Skill.Cost);
+}
 
-	const FGameplayAbilitySpecHandle Learned = AbilitySystem->GiveAbility(FGameplayAbilitySpec(UHeavyStrikeAbility::StaticClass(), 1));
-	if (Learned.IsValid())
+bool ATrainingPlayerState::IsWardEquipped() const
+{
+	auto* Spec = AbilitySystem->FindAbilitySpecFromClass(UTrainingWardAbility::StaticClass());
+	return Spec && Spec->GetDynamicSpecSourceTags().HasTagExact(TrainingPassiveSlot);
+}
+
+void ATrainingPlayerState::RestorePassive()
+{
+	if (HasAuthority() && IsWardEquipped()) AbilitySystem->TryActivateAbilityByClass(UTrainingWardAbility::StaticClass());
+}
+
+void ATrainingPlayerState::ServerToggleWard_Implementation()
+{
+	auto* Spec = AbilitySystem->FindAbilitySpecFromClass(UTrainingWardAbility::StaticClass());
+	if (!Spec) return;
+	if (IsWardEquipped())
 	{
-		Progression->SetSkillPoints(Progression->GetSkillPoints() - HeavyStrikeSkillPointCost);
+		Spec->GetDynamicSpecSourceTags().RemoveTag(TrainingPassiveSlot);
+		AbilitySystem->CancelAbilityHandle(Spec->Handle);
 	}
+	else
+	{
+		if (!AbilitySystem->TryActivateAbility(Spec->Handle)) return;
+		Spec->GetDynamicSpecSourceTags().AddTag(TrainingPassiveSlot);
+	}
+	AbilitySystem->MarkAbilitySpecDirty(*Spec);
 }
 
 void ATrainingPlayerState::RegenerateStamina()
@@ -105,7 +131,10 @@ void ATrainingPlayerState::SaveCheckpoint()
 	auto* Save = NewObject<UTrainingCheckpoint>(this);
 	Save->Experience = FMath::RoundToInt(Progression->GetExperience());
 	Save->SkillPoints = FMath::RoundToInt(Progression->GetSkillPoints());
-	Save->bLearnedHeavy = HasLearnedHeavyStrike();
+	Save->Version = 2;
+	for (const auto& Skill : TrainingSkills::All())
+		if (HasSkill(Skill.Id)) Save->LearnedSkills.AddTag(Skill.Id);
+	if (IsWardEquipped()) Save->PassiveSkill = TrainingWardSkill;
 	Save->bGauntlets = bGauntlets;
 	Save->Health = Attributes->GetHealth();
 	Save->Stamina = Attributes->GetStamina();
@@ -142,15 +171,29 @@ void ATrainingPlayerState::LoadCheckpoint()
 	Progression->SetLevel(1 + Save->Experience / UTrainingProgressionAttributes::ExperiencePerLevel);
 	Progression->SetSkillPoints(Save->SkillPoints);
 	bGauntlets = Save->bGauntlets;
-	auto* Heavy = AbilitySystem->FindAbilitySpecFromClass(UHeavyStrikeAbility::StaticClass());
-	if (Save->bLearnedHeavy && !Heavy)
+	for (const auto& Skill : TrainingSkills::All())
 	{
-		AbilitySystem->GiveAbility(FGameplayAbilitySpec(UHeavyStrikeAbility::StaticClass(), 1));
+		auto* Spec = AbilitySystem->FindAbilitySpecFromClass(Skill.Ability);
+		const bool bLearned = Save->HasSkill(Skill.Id);
+		if (bLearned && !Spec)
+		{
+			const auto Handle = AbilitySystem->GiveAbility(FGameplayAbilitySpec(Skill.Ability, 1));
+			Spec = AbilitySystem->FindAbilitySpecFromHandle(Handle);
+		}
+		if (!Spec) continue;
+		if (!bLearned)
+		{
+			AbilitySystem->ClearAbility(Spec->Handle);
+			continue;
+		}
+		if (Skill.Id == TrainingWardSkill)
+		{
+			if (Save->PassiveSkill == Skill.Id) Spec->GetDynamicSpecSourceTags().AddTag(TrainingPassiveSlot);
+			else Spec->GetDynamicSpecSourceTags().RemoveTag(TrainingPassiveSlot);
+			AbilitySystem->MarkAbilitySpecDirty(*Spec);
+		}
 	}
-	else if (!Save->bLearnedHeavy && Heavy)
-	{
-		AbilitySystem->ClearAbility(Heavy->Handle);
-	}
+	RestorePassive();
 	Attributes->SetHealth(FMath::Min(Save->Health, Attributes->GetMaxHealth()));
 	Attributes->SetStamina(Save->Stamina);
 	GetWorldTimerManager().ClearTimer(StaminaRegen);

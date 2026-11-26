@@ -1,4 +1,5 @@
 #include "TrainingHUD.h"
+#include "TrainingSkillCatalog.h"
 #include "TrainingDummy.h"
 #include "TrainingPulse.h"
 #include "TrainingCharacter.h"
@@ -55,21 +56,25 @@ void ATrainingHUD::DrawHUD()
 				const int32 CurrentExperience = FMath::Clamp(Experience - (Level - 1) * Goal, 0, Goal);
 				Text(Margin, Margin + 55 * Scale, FString::Printf(TEXT("等级 %d    经验 %d / %d    技能点 %d"),
 					Level, CurrentExperience, Goal, Points), 15);
-				FString HeavyStrikeStatus;
-				if (State->HasLearnedHeavyStrike())
+				const FString HeavyStatus = State->HasSkill(TrainingHeavySkill) ? TEXT("重击已学会 · 轻二后按右键")
+					: State->CanLearn(TrainingHeavySkill) ? TEXT("K 学习重击") : TEXT("击倒训练靶 +50 经验");
+				Text(Margin, Margin + 82 * Scale, HeavyStatus + TEXT("    Tab 技能册"), 15);
+				if (bSkillBookOpen)
 				{
-					HeavyStrikeStatus = TEXT("重击已学会    轻二收招时按右键");
+					const float Top = Margin + 170 * Scale;
+					DrawRect(FLinearColor(.025f,.04f,.06f,.93f), Margin, Top, 445 * Scale, 126 * Scale);
+					Text(Margin + 12 * Scale, Top + 6 * Scale, TEXT("技能册    K 学重击   J 学守势   P 装卸守势"), 15);
+					int32 Row = 0;
+					for (const auto& Skill : TrainingSkills::All())
+					{
+						const bool bWard = Skill.Id == TrainingWardSkill;
+						const TCHAR* Status = !State->HasSkill(Skill.Id) ? (State->CanLearn(Skill.Id) ? TEXT("可学习") : TEXT("未解锁"))
+							: bWard ? (State->IsWardEquipped() ? TEXT("已装备") : TEXT("未装备")) : TEXT("已学习");
+						Text(Margin + 12 * Scale, Top + (31 + Row * 40) * Scale, FString::Printf(TEXT("%s · %s    Lv.%d / %d 点"),
+							Skill.Name, Status, Skill.RequiredLevel, Skill.Cost), 14);
+						Text(Margin + 22 * Scale, Top + (49 + Row++ * 40) * Scale, Skill.Description, 13);
+					}
 				}
-				else if (State->CanLearnHeavyStrike())
-				{
-					HeavyStrikeStatus = FString::Printf(TEXT("按 K 学习重击    消耗 %d 技能点"), State->HeavyStrikeSkillPointCost);
-				}
-				else
-				{
-					HeavyStrikeStatus = FString::Printf(TEXT("重击需要等级 %d 和 %d 技能点    击倒训练靶 +%d 经验"),
-						State->HeavyStrikeRequiredLevel, State->HeavyStrikeSkillPointCost, UTrainingDummyExperience::ExperiencePerDefeat);
-				}
-				Text(Margin, Margin + 82 * Scale, HeavyStrikeStatus, 15);
 				Text(Margin, Margin + 108 * Scale, FString::Printf(TEXT("%s   ×%g    Q 切换"),
 					State->HasGauntlets() ? TEXT("训练拳套 · 轻三点燃") : TEXT("徒手"), State->GetWeaponMultiplier()), 15);
 				const FString Notice = State->GetCheckpointNotice();

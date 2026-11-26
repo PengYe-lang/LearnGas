@@ -10,7 +10,9 @@ class LEARNGAS_API ATrainingHUD : public AHUD
 public:
 	ATrainingHUD();
 	virtual void DrawHUD() override;
+	void ToggleSkillBook() { bSkillBookOpen = !bSkillBookOpen; }
 
 private:
+	bool bSkillBookOpen = false;
 	UPROPERTY() TObjectPtr<UFont> LabelFont;
 };

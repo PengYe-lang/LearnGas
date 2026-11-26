@@ -1,5 +1,7 @@
 #include "TrainingCharacter.h"
 #include "TrainingMode.h"
+#include "TrainingSkillCatalog.h"
+#include "TrainingHUD.h"
 #include "TrainingDodgeAbility.h"
 #include "LightStrikeAbility.h"
 #include "AbilitySystemComponent.h"
@@ -75,7 +77,11 @@ void ATrainingCharacter::InitializeAbilitySystem()
 			{
 				if (!ASC->FindAbilitySpecFromClass(Ability)) ASC->GiveAbility(FGameplayAbilitySpec(Ability, 1));
 			}
-			if (auto* State = GetPlayerState<ATrainingPlayerState>()) State->RestoreCheckpointOnEntry();
+			if (auto* State = GetPlayerState<ATrainingPlayerState>())
+			{
+				State->RestoreCheckpointOnEntry();
+				State->RestorePassive();
+			}
 		}
 	}
 }
@@ -122,6 +128,9 @@ void ATrainingCharacter::SetupPlayerInputComponent(UInputComponent* Input)
 	Enhanced->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
 	Enhanced->BindAction(MouseAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 	Enhanced->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
+	Input->BindKey(EKeys::Tab, IE_Pressed, this, &ThisClass::ToggleSkillBook);
+	Input->BindKey(EKeys::J, IE_Pressed, this, &ThisClass::LearnWard);
+	Input->BindKey(EKeys::P, IE_Pressed, this, &ThisClass::ToggleWard);
 	Input->BindKey(EKeys::K, IE_Pressed, this, &ThisClass::LearnHeavyStrike);
 	Input->BindKey(EKeys::Q, IE_Pressed, this, &ThisClass::SwitchWeapon);
 	Input->BindKey(EKeys::F6, IE_Pressed, this, &ThisClass::SaveCheckpoint);
@@ -179,10 +188,23 @@ void ATrainingCharacter::HeavyStrike()
 
 void ATrainingCharacter::LearnHeavyStrike()
 {
-	if (auto* PS = GetPlayerState<ATrainingPlayerState>(); PS && PS->CanLearnHeavyStrike())
-	{
-		PS->ServerLearnHeavyStrike();
-	}
+	if (auto* PS = GetPlayerState<ATrainingPlayerState>()) PS->ServerLearnSkill(TrainingHeavySkill);
+}
+
+void ATrainingCharacter::LearnWard()
+{
+	if (auto* PS = GetPlayerState<ATrainingPlayerState>()) PS->ServerLearnSkill(TrainingWardSkill);
+}
+
+void ATrainingCharacter::ToggleWard()
+{
+	if (auto* PS = GetPlayerState<ATrainingPlayerState>()) PS->ServerToggleWard();
+}
+
+void ATrainingCharacter::ToggleSkillBook()
+{
+	if (auto* PC = Cast<APlayerController>(Controller))
+		if (auto* HUD = Cast<ATrainingHUD>(PC->GetHUD())) HUD->ToggleSkillBook();
 }
 
 void ATrainingCharacter::Dodge()

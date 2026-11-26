@@ -31,6 +31,9 @@ private:
 	void Strike();
 	void HeavyStrike();
 	void LearnHeavyStrike();
+	void LearnWard();
+	void ToggleWard();
+	void ToggleSkillBook();
 	void SwitchWeapon();
 	void SaveCheckpoint();
 	void LoadCheckpoint();

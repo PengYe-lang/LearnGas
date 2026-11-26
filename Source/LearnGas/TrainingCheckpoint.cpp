@@ -1,6 +1,6 @@
 #include "TrainingCheckpoint.h"
 #include "CombatAttributes.h"
-#include "TrainingMode.h"
+#include "TrainingSkillCatalog.h"
 #include "TrainingProgressionAttributes.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/Crc.h"
@@ -10,13 +10,29 @@ namespace
 	const FString Slots[] = { TEXT("LearnGas_Training_A"), TEXT("LearnGas_Training_B") };
 }
 
+bool UTrainingCheckpoint::HasSkill(FGameplayTag Id) const
+{
+	return Version == 1 ? (Id == TrainingHeavySkill && bLearnedHeavy) : LearnedSkills.HasTagExact(Id);
+}
+
 bool UTrainingCheckpoint::IsValidProgress() const
 {
 	const int32 EarnedPoints = Experience / UTrainingProgressionAttributes::ExperiencePerLevel;
-	const int32 SpentPoints = bLearnedHeavy ? ATrainingPlayerState::HeavyStrikeSkillPointCost : 0;
-	return Version == 1 && Generation > 0 && Experience >= 0 && SkillPoints >= 0
+	if (Version != 1 && Version != 2) return false;
+	if (Version == 2)
+	{
+		if (PassiveSkill.IsValid() && (PassiveSkill != TrainingWardSkill || !HasSkill(PassiveSkill))) return false;
+		for (auto Id : LearnedSkills) if (!TrainingSkills::Find(Id)) return false;
+	}
+	int32 SpentPoints = 0;
+	for (const auto& Skill : TrainingSkills::All())
+	{
+		if (!HasSkill(Skill.Id)) continue;
+		if (EarnedPoints + 1 < Skill.RequiredLevel) return false;
+		SpentPoints += Skill.Cost;
+	}
+	return Generation > 0 && Experience >= 0 && SkillPoints >= 0
 		&& SkillPoints == EarnedPoints - SpentPoints
-		&& (!bLearnedHeavy || EarnedPoints + 1 >= ATrainingPlayerState::HeavyStrikeRequiredLevel)
 		&& FMath::IsFinite(Health) && Health >= 0.f && FMath::IsFinite(Stamina)
 		&& Stamina >= 0.f && Stamina <= UCombatAttributes::StaminaCapacity;
 }

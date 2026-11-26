@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AbilitySystemInterface.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/PlayerState.h"
 #include "TrainingMode.generated.h"
@@ -14,17 +15,17 @@ class LEARNGAS_API ATrainingPlayerState : public APlayerState, public IAbilitySy
 {
 	GENERATED_BODY()
 public:
-	static constexpr int32 HeavyStrikeRequiredLevel = 2;
-	static constexpr int32 HeavyStrikeSkillPointCost = 1;
+	bool HasSkill(FGameplayTag Id) const;
+	bool CanLearn(FGameplayTag Id) const;
+	bool IsWardEquipped() const;
+	void RestorePassive();
+	UFUNCTION(Server, Reliable) void ServerLearnSkill(FGameplayTag Id);
+	UFUNCTION(Server, Reliable) void ServerToggleWard();
 
 	ATrainingPlayerState();
 	virtual void BeginPlay() override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem; }
-	bool HasLearnedHeavyStrike() const;
-	bool CanLearnHeavyStrike() const;
 
-	UFUNCTION(Server, Reliable)
-	void ServerLearnHeavyStrike();
 	UFUNCTION(Server, Reliable) void ServerSwitchWeapon();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	bool HasGauntlets() const { return bGauntlets; }
