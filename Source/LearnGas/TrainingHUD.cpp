@@ -19,6 +19,14 @@ ATrainingHUD::ATrainingHUD()
 	LabelFont = Font.Object;
 }
 
+void ATrainingHUD::ShowDamage(FVector Location, float Amount, ETrainingDamageKind Kind, bool bTaken)
+{
+	const float Offset = ((NextDamageLane++ % 3) - 1) * 26.f;
+	NextDamageLane %= 3;
+	if (DamageNumbers.Num() >= 24) DamageNumbers.RemoveAt(0);
+	DamageNumbers.Add({Location, Amount, Kind, bTaken, GetWorld()->GetTimeSeconds(), Offset});
+}
+
 void ATrainingHUD::DrawHUD()
 {
 	Super::DrawHUD();
@@ -134,5 +142,24 @@ void ATrainingHUD::DrawHUD()
 			It->GetAbilitySystemComponent()->HasMatchingGameplayTag(TrainingBurning) ? TEXT("训练靶 · 灼烧") : TEXT("训练靶"), Attr->GetHealth(), Attr->GetMaxHealth()), 14, true);
 		DrawRect(FLinearColor(.02f,.035f,.05f,.9f), X, Screen.Y, Width, 7 * Scale);
 		DrawRect(FLinearColor(.12f,.88f,.64f), X, Screen.Y, Width * Attr->GetHealth() / Attr->GetMaxHealth(), 7 * Scale);
+	}
+	const double Now = GetWorld()->GetTimeSeconds();
+	DamageNumbers.RemoveAll([Now](const FDamageNumber& N) { return Now - N.Start >= .95; });
+	for (const auto& N : DamageNumbers)
+	{
+		const float Age = Now - N.Start;
+		FVector2D Screen;
+		if (!PlayerOwner->ProjectWorldLocationToScreen(N.Origin + FVector(0,0,55.f + Age * 52.f), Screen, true)) continue;
+		const TCHAR* Prefix = N.bTaken ? TEXT("受击 ") : N.Kind == ETrainingDamageKind::Burning ? TEXT("灼烧 ")
+			: N.Kind == ETrainingDamageKind::Fire ? TEXT("火伤 ") : TEXT("");
+		FLinearColor Color = N.bTaken ? FLinearColor(1.f,.28f,.22f) : N.Kind == ETrainingDamageKind::Physical
+			? FLinearColor(1.f,.94f,.82f) : FLinearColor(1.f,.58f,.13f);
+		Color.A = FMath::Clamp((.95f - Age) / .30f, 0.f, 1.f);
+		const FString Label = FString::Printf(TEXT("%s−%s"), Prefix, *FString::SanitizeFloat(FMath::RoundToFloat(N.Amount * 10.f) / 10.f, 0));
+		FCanvasTextItem Item(Screen + FVector2D(N.Shift * Scale, 0), FText::FromString(Label),
+			FSlateFontInfo(LabelFont, FMath::RoundToInt(21 * Scale), TEXT("Bold")), Color);
+		Item.bCentreX = true;
+		Item.EnableShadow(FLinearColor::Black);
+		Canvas->DrawItem(Item);
 	}
 }

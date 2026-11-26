@@ -2,6 +2,7 @@
 
 #include "AbilitySystemInterface.h"
 #include "GameplayTagContainer.h"
+#include "TrainingDamage.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/PlayerState.h"
 #include "TrainingMode.generated.h"
@@ -21,6 +22,7 @@ public:
 	void RestorePassive();
 	UFUNCTION(Server,Reliable) void ServerStartTrial();
 	void RecordTrialClear();
+	UFUNCTION(Client, Unreliable) void ClientShowDamage(FVector_NetQuantize Location, float Amount, ETrainingDamageKind Kind, bool bTaken);
 	bool HasClearedTrial() const { return bTrialCleared; }
 	UFUNCTION(Server, Reliable) void ServerLearnSkill(FGameplayTag Id);
 	UFUNCTION(Server, Reliable) void ServerToggleWard();

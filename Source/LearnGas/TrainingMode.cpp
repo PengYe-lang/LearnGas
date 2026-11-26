@@ -25,6 +25,12 @@ void ATrainingPlayerState::ServerStartTrial_Implementation()
 	for (TActorIterator<ATrainingEncounter> It(GetWorld()); It; ++It) It->TryStart(Character);
 }
 
+void ATrainingPlayerState::ClientShowDamage_Implementation(FVector_NetQuantize Location, float Amount, ETrainingDamageKind Kind, bool bTaken)
+{
+	if (auto* PC = GetPlayerController())
+		if (auto* HUD = Cast<ATrainingHUD>(PC->GetHUD())) HUD->ShowDamage(Location, Amount, Kind, bTaken);
+}
+
 void ATrainingPlayerState::RecordTrialClear()
 {
 	if (!HasAuthority() || bTrialCleared) return;

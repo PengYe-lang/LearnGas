@@ -3,6 +3,7 @@
 #include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "TrainingCharacter.h"
+#include "TrainingMode.h"
 #include "TrainingDefeatReward.h"
 
 UE_DEFINE_GAMEPLAY_TAG(TrainingDown, "State.Training.Down");
@@ -44,6 +45,20 @@ void UCombatAttributes::PostGameplayEffectExecute(const FGameplayEffectModCallba
 
 		const float PreviousHealth = GetHealth();
 		SetHealth(FMath::Clamp(PreviousHealth - Damage, 0.f, GetMaxHealth()));
+		const float Applied = PreviousHealth - GetHealth();
+		AActor* Victim = Data.Target.GetAvatarActor();
+		if (Applied > 0.f && Victim && Victim->HasAuthority())
+		{
+			const auto* Definition = Cast<UTrainingDamageEffect>(Data.EffectSpec.Def);
+			const auto Kind = Data.EffectSpec.GetPeriod() > 0.f ? ETrainingDamageKind::Burning
+				: Definition && Definition->bFireDamage ? ETrainingDamageKind::Fire : ETrainingDamageKind::Physical;
+			const auto* Source = Data.EffectSpec.GetContext().GetInstigatorAbilitySystemComponent();
+			auto* Attacker = Source ? Cast<ATrainingPlayerState>(Source->GetOwnerActor()) : nullptr;
+			auto* Defender = Cast<ATrainingPlayerState>(Data.Target.GetOwnerActor());
+			const FVector Location = Victim->GetActorLocation();
+			if (Attacker && Attacker != Defender) Attacker->ClientShowDamage(Location, Applied, Kind, false);
+			if (Defender) Defender->ClientShowDamage(Location, Applied, Kind, true);
+		}
 		if (PreviousHealth > 0.f && GetHealth() <= 0.f)
 		{
 			AActor* Avatar = Data.Target.GetAvatarActor();

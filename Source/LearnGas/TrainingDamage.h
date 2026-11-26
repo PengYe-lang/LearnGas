@@ -4,6 +4,9 @@
 #include "GameplayEffectExecutionCalculation.h"
 #include "TrainingDamage.generated.h"
 
+UENUM()
+enum class ETrainingDamageKind : uint8 { Physical, Fire, Burning };
+
 UCLASS(Abstract)
 class UTrainingDamageEffect : public UGameplayEffect
 {
