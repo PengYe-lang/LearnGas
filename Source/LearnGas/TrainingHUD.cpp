@@ -41,7 +41,8 @@ void ATrainingHUD::DrawHUD()
 		{
 			const float HP = ASC->GetNumericAttribute(UCombatAttributes::GetHealthAttribute());
 			const float Stamina = ASC->GetNumericAttribute(UCombatAttributes::GetStaminaAttribute());
-			Text(Margin, Margin, FString::Printf(TEXT("生命 %.0f    体力 %.0f / 100"), HP, Stamina), 18);
+			Text(Margin, Margin, FString::Printf(TEXT("生命 %.0f    体力 %.0f / 100    护甲 %.0f"), HP, Stamina,
+				ASC->GetNumericAttribute(UCombatAttributes::GetArmorAttribute())), 18);
 			DrawRect(FLinearColor(.03f, .04f, .05f), Margin, Margin + 36 * Scale, 220 * Scale, 7 * Scale);
 			DrawRect(FLinearColor(.95f, .73f, .25f), Margin, Margin + 36 * Scale,
 				220 * Scale * Stamina / UCombatAttributes::StaminaCapacity, 7 * Scale);

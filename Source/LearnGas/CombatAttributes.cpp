@@ -37,7 +37,7 @@ void UCombatAttributes::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
 	{
 		const float Multiplier = Data.EffectSpec.GetSetByCallerMagnitude(TrainingWeaponMultiplier, false, 1.f);
-		const float Damage = FMath::Max(0.f, GetIncomingDamage() * Multiplier);
+		const float Damage = FMath::Max(0.f, GetIncomingDamage() * Multiplier * 100.f / (100.f + FMath::Max(0.f, GetArmor())));
 		SetIncomingDamage(0.f);
 		if (Damage <= 0.f || Data.Target.HasMatchingGameplayTag(TrainingDodgeInvulnerable)) return;
 
@@ -64,9 +64,15 @@ void UCombatAttributes::PostGameplayEffectExecute(const FGameplayEffectModCallba
 void UCombatAttributes::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCombatAttributes, Armor, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCombatAttributes, Health, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCombatAttributes, MaxHealth, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCombatAttributes, Stamina, COND_None, REPNOTIFY_Always);
+}
+
+void UCombatAttributes::OnRep_Armor(const FGameplayAttributeData& Previous)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCombatAttributes, Armor, Previous);
 }
 
 void UCombatAttributes::OnRep_Health(const FGameplayAttributeData& Previous)

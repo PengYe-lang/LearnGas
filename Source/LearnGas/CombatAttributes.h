@@ -43,6 +43,11 @@ public:
 	GAMEPLAYATTRIBUTE_VALUE_SETTER(Stamina)
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(Stamina)
 
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Armor, Category="Combat")
+	FGameplayAttributeData Armor;
+	GAMEPLAYATTRIBUTE_PROPERTY_GETTER(UCombatAttributes, Armor)
+	GAMEPLAYATTRIBUTE_VALUE_GETTER(Armor)
+
 	UPROPERTY()
 	FGameplayAttributeData IncomingDamage;
 	GAMEPLAYATTRIBUTE_PROPERTY_GETTER(UCombatAttributes, IncomingDamage)
@@ -50,6 +55,7 @@ public:
 	GAMEPLAYATTRIBUTE_VALUE_SETTER(IncomingDamage)
 
 private:
+	UFUNCTION() void OnRep_Armor(const FGameplayAttributeData& Previous);
 	UFUNCTION() void OnRep_Health(const FGameplayAttributeData& Previous);
 	UFUNCTION() void OnRep_MaxHealth(const FGameplayAttributeData& Previous);
 	UFUNCTION() void OnRep_Stamina(const FGameplayAttributeData& Previous);
