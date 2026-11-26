@@ -87,7 +87,11 @@ void ATrainingHUD::DrawHUD()
 				const FString Notice = State->GetCheckpointNotice();
 				if (!Notice.IsEmpty()) Text(Margin, Canvas->SizeY - 78 * Scale, Notice, 15);
 			}
-			if (ASC->HasMatchingGameplayTag(TrainingHitStun))
+			if (ASC->HasMatchingGameplayTag(TrainingDown))
+			{
+				Text(Canvas->SizeX * .5f, Canvas->SizeY * .42f, TEXT("已倒下 · 即将返回训练起点"), 23, true);
+			}
+			else if (ASC->HasMatchingGameplayTag(TrainingHitStun))
 			{
 				Text(Margin, Margin + 138 * Scale, TEXT("受击硬直"), 15);
 			}

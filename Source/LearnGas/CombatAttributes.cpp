@@ -5,6 +5,7 @@
 #include "TrainingCharacter.h"
 #include "TrainingDefeatReward.h"
 
+UE_DEFINE_GAMEPLAY_TAG(TrainingDown, "State.Training.Down");
 UE_DEFINE_GAMEPLAY_TAG(TrainingBurning, "Status.Training.Burning");
 UE_DEFINE_GAMEPLAY_TAG(TrainingAttack, "Ability.Training.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TrainingWeaponMultiplier, "Data.Training.WeaponMultiplier");
@@ -51,7 +52,7 @@ void UCombatAttributes::PostGameplayEffectExecute(const FGameplayEffectModCallba
 				Reward->Grant(Data.EffectSpec.GetContext());
 			}
 		}
-		if (Data.EffectSpec.GetPeriod() <= 0.f && GetHealth() < PreviousHealth && Cast<ATrainingCharacter>(Data.Target.GetAvatarActor()))
+		if (GetHealth() > 0.f && Data.EffectSpec.GetPeriod() <= 0.f && GetHealth() < PreviousHealth && Cast<ATrainingCharacter>(Data.Target.GetAvatarActor()))
 		{
 			const auto Stun = Data.Target.MakeOutgoingSpec(UTrainingHitStunEffect::StaticClass(), 1.f, Data.EffectSpec.GetContext());
 			if (Stun.IsValid()) Data.Target.ApplyGameplayEffectSpecToSelf(*Stun.Data);
@@ -110,6 +111,16 @@ UHeavyStrikeDamage::UHeavyStrikeDamage()
 UTrainingPulseDamage::UTrainingPulseDamage()
 {
 	BaseDamage = 10.f;
+}
+
+UTrainingDownEffect::UTrainingDownEffect()
+{
+	DurationPolicy = EGameplayEffectDurationType::Infinite;
+	auto* Tags = CreateDefaultSubobject<UTargetTagsGameplayEffectComponent>(TEXT("Down"));
+	FInheritedTagContainer Changes;
+	Changes.AddTag(TrainingDown);
+	Tags->SetAndApplyTargetTagChanges(Changes);
+	GEComponents.Add(Tags);
 }
 
 UTrainingHitStunEffect::UTrainingHitStunEffect()

@@ -16,6 +16,7 @@ UTrainingDodgeAbility::UTrainingDodgeAbility()
 	SetAssetTags(FGameplayTagContainer(TrainingDodge));
 	ActivationOwnedTags.AddTag(TrainingDodging);
 	ActivationBlockedTags.AddTag(TrainingHitStun);
+	ActivationBlockedTags.AddTag(TrainingDown);
 }
 
 bool UTrainingDodgeAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* Info,

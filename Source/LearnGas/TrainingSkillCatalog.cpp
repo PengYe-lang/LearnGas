@@ -38,6 +38,7 @@ UTrainingWardAbility::UTrainingWardAbility()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::ServerOnly;
+	ActivationBlockedTags.AddTag(TrainingDown);
 }
 
 void UTrainingWardAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* Info,

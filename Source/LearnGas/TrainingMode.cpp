@@ -20,7 +20,7 @@ void ATrainingPlayerState::ServerSwitchWeapon_Implementation()
 {
 	const auto* Character = Cast<ATrainingCharacter>(AbilitySystem->GetAvatarActor());
 	if (!Character || Character->ActiveStrike.IsValid() || AbilitySystem->HasMatchingGameplayTag(TrainingDodging)
-		|| AbilitySystem->HasMatchingGameplayTag(TrainingHitStun)) return;
+		|| AbilitySystem->HasMatchingGameplayTag(TrainingHitStun) || AbilitySystem->HasMatchingGameplayTag(TrainingDown)) return;
 	bGauntlets = !bGauntlets;
 }
 
@@ -46,9 +46,55 @@ void ATrainingPlayerState::BeginPlay()
 	Super::BeginPlay();
 	if (HasAuthority())
 	{
+		AbilitySystem->GetGameplayAttributeValueChangeDelegate(UCombatAttributes::GetHealthAttribute())
+			.AddUObject(this, &ThisClass::OnHealthChanged);
 		AbilitySystem->GetGameplayAttributeValueChangeDelegate(UCombatAttributes::GetStaminaAttribute())
 			.AddUObject(this, &ThisClass::OnStaminaChanged);
 	}
+}
+
+void ATrainingPlayerState::OnHealthChanged(const FOnAttributeChangeData& Change)
+{
+	auto* Character = Cast<ATrainingCharacter>(AbilitySystem->GetAvatarActor());
+	if (Change.NewValue > 0.f)
+	{
+		if (Change.OldValue <= 0.f)
+		{
+			GetWorldTimerManager().ClearTimer(RespawnTimer);
+			AbilitySystem->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(TrainingDown));
+			if (Character) Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		}
+		return;
+	}
+	if (Change.OldValue <= 0.f || !Character) return;
+	AbilitySystem->ApplyGameplayEffectToSelf(GetDefault<UTrainingDownEffect>(), 1, AbilitySystem->MakeEffectContext());
+	AbilitySystem->CancelAbilities();
+	AbilitySystem->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(TrainingBurning));
+	Character->GetCharacterMovement()->DisableMovement();
+	Character->StopAnimMontage();
+	GetWorldTimerManager().SetTimer(RespawnTimer, this, &ThisClass::RespawnTrainingPlayer, 2.f);
+}
+
+void ATrainingPlayerState::RespawnTrainingPlayer()
+{
+	auto* PC = GetPlayerController();
+	auto* Mode = GetWorld()->GetAuthGameMode();
+	if (!PC || !Mode || Attributes->GetHealth() > 0.f) return;
+	if (APawn* PreviousPawn = PC->GetPawn())
+	{
+		PC->UnPossess();
+		PreviousPawn->Destroy();
+	}
+	Mode->RestartPlayer(PC);
+	if (!PC->GetPawn())
+	{
+		GetWorldTimerManager().SetTimer(RespawnTimer, this, &ThisClass::RespawnTrainingPlayer, 1.f);
+		return;
+	}
+	Attributes->SetHealth(Attributes->GetMaxHealth());
+	Attributes->SetStamina(UCombatAttributes::StaminaCapacity);
+	GetWorldTimerManager().ClearTimer(StaminaRegen);
+	RestorePassive();
 }
 
 void ATrainingPlayerState::OnStaminaChanged(const FOnAttributeChangeData& Change)
@@ -93,7 +139,7 @@ void ATrainingPlayerState::RestorePassive()
 void ATrainingPlayerState::ServerToggleWard_Implementation()
 {
 	auto* Spec = AbilitySystem->FindAbilitySpecFromClass(UTrainingWardAbility::StaticClass());
-	if (!Spec) return;
+	if (!Spec || AbilitySystem->HasMatchingGameplayTag(TrainingDown)) return;
 	if (IsWardEquipped())
 	{
 		Spec->GetDynamicSpecSourceTags().RemoveTag(TrainingPassiveSlot);
@@ -128,6 +174,11 @@ FString ATrainingPlayerState::GetCheckpointNotice() const
 void ATrainingPlayerState::SaveCheckpoint()
 {
 	if (GetNetMode() != NM_Standalone) return;
+	if (AbilitySystem->HasMatchingGameplayTag(TrainingDown))
+	{
+		ShowCheckpointNotice(TEXT("倒地中，起身后可以保存"));
+		return;
+	}
 	auto* Save = NewObject<UTrainingCheckpoint>(this);
 	Save->Experience = FMath::RoundToInt(Progression->GetExperience());
 	Save->SkillPoints = FMath::RoundToInt(Progression->GetSkillPoints());
@@ -193,8 +244,8 @@ void ATrainingPlayerState::LoadCheckpoint()
 			AbilitySystem->MarkAbilitySpecDirty(*Spec);
 		}
 	}
-	RestorePassive();
 	Attributes->SetHealth(FMath::Min(Save->Health, Attributes->GetMaxHealth()));
+	RestorePassive();
 	Attributes->SetStamina(Save->Stamina);
 	GetWorldTimerManager().ClearTimer(StaminaRegen);
 	if (Save->Stamina < UCombatAttributes::StaminaCapacity)

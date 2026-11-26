@@ -111,6 +111,7 @@ UTrainingFireboltAbility::UTrainingFireboltAbility()
 	CostGameplayEffectClass = UTrainingFireboltCost::StaticClass();
 	ActivationBlockedTags.AddTag(TrainingDodging);
 	ActivationBlockedTags.AddTag(TrainingHitStun);
+	ActivationBlockedTags.AddTag(TrainingDown);
 	ActivationBlockedTags.AddTag(TrainingAttack);
 }
 

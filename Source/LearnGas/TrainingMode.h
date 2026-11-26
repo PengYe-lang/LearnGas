@@ -42,6 +42,9 @@ private:
 	UPROPERTY() TObjectPtr<UCombatAttributes> Attributes;
 	UPROPERTY() TObjectPtr<UTrainingProgressionAttributes> Progression;
 	FTimerHandle StaminaRegen;
+	FTimerHandle RespawnTimer;
+	void OnHealthChanged(const FOnAttributeChangeData& Change);
+	void RespawnTrainingPlayer();
 	bool bCheckedInitialCheckpoint = false;
 	FString CheckpointNotice;
 	double NoticeEndsAt = 0.;

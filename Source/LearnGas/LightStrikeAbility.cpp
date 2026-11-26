@@ -37,6 +37,7 @@ ULightStrikeAbility::ULightStrikeAbility()
 	DamageEffect = ULightStrikeDamage::StaticClass();
 	SetAssetTags(FGameplayTagContainer(TrainingAttack));
 	ActivationBlockedTags.AddTag(TrainingHitStun);
+	ActivationBlockedTags.AddTag(TrainingDown);
 	ActivationBlockedTags.AddTag(TrainingDodging);
 }
 

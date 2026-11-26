@@ -6,6 +6,7 @@
 #include "NativeGameplayTags.h"
 #include "CombatAttributes.generated.h"
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingDown);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingBurning);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingAttack);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingWeaponMultiplier);
@@ -82,6 +83,14 @@ class UTrainingPulseDamage : public UTrainingDamageEffect
 	GENERATED_BODY()
 public:
 	UTrainingPulseDamage();
+};
+
+UCLASS()
+class UTrainingDownEffect : public UGameplayEffect
+{
+	GENERATED_BODY()
+public:
+	UTrainingDownEffect();
 };
 
 UCLASS()
