@@ -32,6 +32,8 @@ private:
 	void HeavyStrike();
 	void LearnHeavyStrike();
 	void LearnWard();
+	void LearnFirebolt();
+	void CastFirebolt();
 	void ToggleWard();
 	void ToggleSkillBook();
 	void SwitchWeapon();

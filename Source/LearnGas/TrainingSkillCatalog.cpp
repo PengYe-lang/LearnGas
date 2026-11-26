@@ -1,8 +1,10 @@
 #include "TrainingSkillCatalog.h"
+#include "TrainingFirebolt.h"
 #include "CombatAttributes.h"
 #include "LightStrikeAbility.h"
 
 UE_DEFINE_GAMEPLAY_TAG(TrainingHeavySkill, "Skill.Training.Heavy");
+UE_DEFINE_GAMEPLAY_TAG(TrainingBoltSkill, "Skill.Training.Firebolt");
 UE_DEFINE_GAMEPLAY_TAG(TrainingWardSkill, "Skill.Training.Ward");
 UE_DEFINE_GAMEPLAY_TAG(TrainingPassiveSlot, "Slot.Training.Passive");
 
@@ -10,6 +12,7 @@ TConstArrayView<FTrainingSkillDefinition> TrainingSkills::All()
 {
 	static const FTrainingSkillDefinition Skills[] = {
 		{ TrainingHeavySkill, UHeavyStrikeAbility::StaticClass(), TEXT("重击"), TEXT("轻二后按右键，打出重击"), 2, 1 },
+		{ TrainingBoltSkill, UTrainingFireboltAbility::StaticClass(), TEXT("焰弹"), TEXT("R 向准星发射，消耗 18 体力，命中造成 24 火伤"), 2, 1 },
 		{ TrainingWardSkill, UTrainingWardAbility::StaticClass(), TEXT("守势"), TEXT("装入被动槽后获得 25 护甲"), 2, 1 }
 	};
 	return MakeArrayView(Skills);

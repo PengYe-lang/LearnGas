@@ -7,6 +7,7 @@
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingHeavySkill);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingWardSkill);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingBoltSkill);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TrainingPassiveSlot);
 
 struct FTrainingSkillDefinition

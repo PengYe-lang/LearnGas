@@ -1,6 +1,7 @@
 #include "TrainingCharacter.h"
 #include "TrainingMode.h"
 #include "TrainingSkillCatalog.h"
+#include "TrainingFirebolt.h"
 #include "TrainingHUD.h"
 #include "TrainingDodgeAbility.h"
 #include "LightStrikeAbility.h"
@@ -129,6 +130,8 @@ void ATrainingCharacter::SetupPlayerInputComponent(UInputComponent* Input)
 	Enhanced->BindAction(MouseAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 	Enhanced->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 	Input->BindKey(EKeys::Tab, IE_Pressed, this, &ThisClass::ToggleSkillBook);
+	Input->BindKey(EKeys::B, IE_Pressed, this, &ThisClass::LearnFirebolt);
+	Input->BindKey(EKeys::R, IE_Pressed, this, &ThisClass::CastFirebolt);
 	Input->BindKey(EKeys::J, IE_Pressed, this, &ThisClass::LearnWard);
 	Input->BindKey(EKeys::P, IE_Pressed, this, &ThisClass::ToggleWard);
 	Input->BindKey(EKeys::K, IE_Pressed, this, &ThisClass::LearnHeavyStrike);
@@ -189,6 +192,16 @@ void ATrainingCharacter::HeavyStrike()
 void ATrainingCharacter::LearnHeavyStrike()
 {
 	if (auto* PS = GetPlayerState<ATrainingPlayerState>()) PS->ServerLearnSkill(TrainingHeavySkill);
+}
+
+void ATrainingCharacter::LearnFirebolt()
+{
+	if (auto* State = GetPlayerState<ATrainingPlayerState>()) State->ServerLearnSkill(TrainingBoltSkill);
+}
+
+void ATrainingCharacter::CastFirebolt()
+{
+	if (auto* ASC = GetAbilitySystemComponent()) ASC->TryActivateAbilityByClass(UTrainingFireboltAbility::StaticClass());
 }
 
 void ATrainingCharacter::LearnWard()

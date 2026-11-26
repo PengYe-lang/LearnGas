@@ -59,11 +59,17 @@ void ATrainingHUD::DrawHUD()
 				const FString HeavyStatus = State->HasSkill(TrainingHeavySkill) ? TEXT("重击已学会 · 轻二后按右键")
 					: State->CanLearn(TrainingHeavySkill) ? TEXT("K 学习重击") : TEXT("击倒训练靶 +50 经验");
 				Text(Margin, Margin + 82 * Scale, HeavyStatus + TEXT("    Tab 技能册"), 15);
+				if (State->HasSkill(TrainingBoltSkill))
+				{
+					const FVector2D Center(Canvas->SizeX * .5f, Canvas->SizeY * .5f);
+					DrawRect(FLinearColor::Black, Center.X - 3, Center.Y - 3, 6, 6);
+					DrawRect(FLinearColor::White, Center.X - 1.5f, Center.Y - 1.5f, 3, 3);
+				}
 				if (bSkillBookOpen)
 				{
 					const float Top = Margin + 170 * Scale;
-					DrawRect(FLinearColor(.025f,.04f,.06f,.93f), Margin, Top, 445 * Scale, 126 * Scale);
-					Text(Margin + 12 * Scale, Top + 6 * Scale, TEXT("技能册    K 学重击   J 学守势   P 装卸守势"), 15);
+					DrawRect(FLinearColor(.025f,.04f,.06f,.93f), Margin, Top, 445 * Scale, (46 + 40 * TrainingSkills::All().Num()) * Scale);
+					Text(Margin + 12 * Scale, Top + 6 * Scale, TEXT("技能册    K 重击   B 焰弹   J 守势   P 装卸守势"), 15);
 					int32 Row = 0;
 					for (const auto& Skill : TrainingSkills::All())
 					{
